@@ -2,7 +2,7 @@
 --                                                             --
 -----------------------------------------------------------------
 --
---      LsstIonPumpCtrl.vhd - 
+--      LsstAcFilterRelay.vhd - 
 --
 --      Copyright(c) SLAC National Accelerator Laboratory 2000
 --
@@ -11,7 +11,7 @@
 --      Last change: JO 8/2/2017 9:40:28 AM
 --
 -------------------------------------------------------------------------------
--- File       : LsstIonPumpCtrl.vhd
+-- File       : LsstAcFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-04-20
 -- Last update: 2018-02-14
@@ -36,7 +36,7 @@ use work.AxiLitePkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity LsstIonPumpCtrl is
+entity LsstAcFilterRelay is
    generic (
       TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
@@ -77,9 +77,9 @@ entity LsstIonPumpCtrl is
       -- XADC Ports
       vPIn     : in    sl;
       vNIn     : in    sl);
-end LsstIonPumpCtrl;
+end LsstAcFilterRelay;
 
-architecture top_level of LsstIonPumpCtrl is
+architecture top_level of LsstAcFilterRelay is
 
    constant SYS_CLK_FREQ_C      : real                                         := 156.0E+6;
    constant AXI_CONFIG_C        : AxiLiteCrossbarMasterConfigArray(6 downto 0) := genAxiLiteConfig(7, x"0000_0000", 22, 18);
@@ -171,7 +171,7 @@ begin
    ---------------------------------
    -- AXI-Lite: Ion Pump Application
    ---------------------------------
-   U_App : entity work.LsstIonPumpCtrlApp
+   U_App : entity work.LsstAcFilterRelayApp
       generic map (
          TPD_G           => TPD_G,
          AXI_CLK_FREQ_C  => SYS_CLK_FREQ_C,
