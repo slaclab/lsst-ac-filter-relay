@@ -1,4 +1,4 @@
-# lsst-ion-pump-ps-controller
+# lsst-ac-filter-relay
 
 > https://confluence.slac.stanford.edu/display/~leosap/IP+address+allocation
 
