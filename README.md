@@ -17,4 +17,4 @@
 > $ git lfs install
 
 # Clone the GIT repository
-> $ git clone --recursive git@github.com:slaclab/lsst-ion-pump-ps-controller
+> $ git clone --recursive git@github.com:slaclab/lsst-ac-filter-relay
