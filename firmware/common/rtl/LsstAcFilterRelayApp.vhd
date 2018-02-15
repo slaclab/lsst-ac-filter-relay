@@ -2,7 +2,7 @@
 --                                                             --
 -----------------------------------------------------------------
 --
---      LsstIonPumpCtrlApp.vhd -
+--      LsstAcFilterRelayApp.vhd -
 --
 --      Copyright(c) SLAC National Accelerator Laboratory 2000
 --
@@ -40,7 +40,7 @@ use work.AxiLitePkg.all;
 
 
 
-entity LsstIonPumpCtrlApp is
+entity LsstAcFilterRelayApp is
   generic (
     TPD_G            : time            := 1ns;
     AXI_BASE_ADDR_G    : slv(31 downto 0)        := x"00000000";
@@ -80,9 +80,9 @@ entity LsstIonPumpCtrlApp is
 -- Ion Pump Enable
     Enable : out slv(5 downto 0)        -- Enable HVPS
     );
-end entity LsstIonPumpCtrlApp;
+end entity LsstAcFilterRelayApp;
 
-architecture Behavioral of LsstIonPumpCtrlApp is
+architecture Behavioral of LsstAcFilterRelayApp is
 
  
   -------------------------------------------------------------------------------------------------
