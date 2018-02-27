@@ -6,12 +6,12 @@
 --
 --      Copyright(c) SLAC National Accelerator Laboratory 2000
 --
---      Author: Jeff Olsen
---      Created on: 4/20/2017 2:04:46 PM
---      Last change: JO 1/30/2018 3:45:53 PM
+--      Author: 
+--      Created on: 
+--      Last change: 
 --
 -------------------------------------------------------------------------------
--- File       : lsst-ion-pump-ps-contoller.vhd
+-- File       : LsstAcFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-02-04
 -- Last update: 2017-08-02
@@ -58,27 +58,16 @@ entity LsstAcFilterRelayApp is
     axilWriteMaster : in  AxiLiteWriteMasterType;
     axilWriteSlave  : out AxiLiteWriteSlaveType;
 
--- Controller IO
--- Ion Pump Control Board ADC SPI Interfaces
-    iMonDin : in  slv(5 downto 0);      -- Serial in from Current Mon ADC
-    vMonDin : in  slv(5 downto 0);      -- Serial in from Voltage Mon ADC
-    pMonDin : in  slv(5 downto 0);      -- Serial in from Power Mon ADC
-    adcSClk : out slv(5 downto 0);      -- Clock for Monitor ADCs
+-- Relay Okay signals
+    relOK : out slv (11 downto 0);      --relay Okay signal to 
 
--- Ion Pump Control Board ADC SPI Interfaces
-    dacDout  : out slv(5 downto 0);     -- Serial out for Setpoint DACs
-    dacSclk  : out slv(5 downto 0);     -- Clock for the Setpoint DACs
-    iProgCsL : out slv(5 downto 0);     -- Chip Enable for Current DAC
-    vProgCsL : out slv(5 downto 0);     -- Chip Enable for Voltage DAC
-    pProgCsL : out slv(5 downto 0);     -- Chip Enable for Power DAC
-
--- Ion Pump Control Board Mode bits
-    iMode : in slv(5 downto 0);         -- HVPS in Current Limit Mode
-    vMode : in slv(5 downto 0);         -- HVPS in Voltage Limit Mode
-    pMode : in slv(5 downto 0);         -- HVPS in Power Limit Mode
-
--- Ion Pump Enable
-    Enable : out slv(5 downto 0)        -- Enable HVPS
+    
+-- SN65HVD1780QDRQ1 interface (RS485 transceiver)
+    rec_Data    : in    sl; --
+    rec_En      : in    sl; --
+    driver_En   : in    sl; --
+    driver_Data : in    sl -- 
+    
     );
 end entity LsstAcFilterRelayApp;
 
@@ -150,46 +139,29 @@ begin
       mAxiReadMasters     => LocAxilReadMasters,
       mAxiReadSlaves      => LocAxilReadSlaves);
 
-  genFrontEnd : for I in 0 to 5 generate
-    uFrontEnd : entity work.FrontEndBoard
-      generic map (
-        TPD_G            => 1 ns,
-        AXI_BASE_ADDR_G  => AXI_CROSSBAR_MASTERS_CONFIG_C(i).baseAddr,
-        AXI_ERROR_RESP_G => AXI_RESP_DECERR_C,
-        CLK_PERIOD_G     => 6.4E-9      -- 156Mhz
-        )
-      port map (
-        axilClk => axilClk,
-        axilRst => axilRst,
-
-        axiLReadMaster  => LocAxilReadMasters(BOARD_INDEX_C+I),
-        axiLReadSlave   => LocAxilReadSlaves(BOARD_INDEX_C+I),
-        axiLWriteMaster => LocAxilWriteMasters(BOARD_INDEX_C+I),
-        axiLWriteSlave  => LocAxilWriteSlaves(BOARD_INDEX_C+I),
-
--- Controller IO
--- Ion Pump Control Board ADC SPI Interfaces
-        iMonDin => iMonDin(I),          -- Serial in from Current Mon ADC
-        vMonDin => vMonDin(I),          -- Serial in from Voltage Mon ADC
-        pMonDin => pMonDin(I),          -- Serial in from Power Mon ADC
-        adcSClk => adcSclk(I),          -- Clock for Monitor ADCs
-
--- Ion Pump Control Board ADC SPI Interfaces
-        dacDout  => dacDout(I),         -- Serial out for Setpoint DACs
-        dacSclk  => dacSclk(I),         -- Clock for the Setpoint DACs
-        iProgCsL => iProgCsL(I),        -- Chip Enable for Current DAC
-        vProgCsL => vProgCsL(I),        -- Chip Enable for Voltage DAC
-        pProgCsL => pProgCsL(I),        -- Chip Enable for Power DAC
-
--- Ion Pump Control Board Mode bits
-        iMode => iMode(I),              -- HVPS in Current Limit Mode
-        vMode => vMode(I),              -- HVPS in Voltage Limit Mode
-        pMode => pMode(I),              -- HVPS in Power Limit Mode
-
--- Ion Pump Enable
-        enable => enable(I)             -- Enable HVPS
-        );
-  end generate;
+  ---------------------------
+  -- Relay register
+  ---------------------------  
+ U_RelayReg : entity work.RelayReg
+    generic map(
+     TPD_G            => TPD_G
+    -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
+     )
+   port map ( 
+     -- Slave AXI-Lite Interface
+      axilClk             => axilClk,
+      axilRst             => axilRst,
+      axilReadMaster      => axilReadMaster,
+      axilReadSlave       => axilReadSlave,
+      axilWriteMaster     => axilWriteMaster,
+      axilWriteSlave      => axilWriteSlave,
+     
+     -- Relay Control    
+      relOK               => relOK
+     );
+  
+  
+  
 end Behavioral;
 
 
