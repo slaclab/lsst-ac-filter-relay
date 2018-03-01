@@ -6,15 +6,15 @@
 --
 --      Copyright(c) SLAC National Accelerator Laboratory 2000
 --
---      Author: Jeff Olsen
---      Created on: 7/19/2017 1:33:09 PM
---      Last change: JO 2/6/2018 9:25:34 AM
+--      Author: 
+--      Created on: 
+--      Last change: 
 --
 -------------------------------------------------------------------------------
--- File       : LsstIonPumpCtrl.vhd
+-- File       : LSStACFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-04-20
--- Last update: 2018-02-14
+-- Created    : 2018-02-28
+-- Last update: 2018-02-28
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -42,13 +42,13 @@ entity LsstAcFilterRelay is
       BUILD_INFO_G : BuildInfoType);
    port (
       -- Relay Okay signal --
-      relOK      : out   slv(11 downto 0) := "000000000000"; --
+      relOK      : out   slv(11 downto 0) := x"000"; --
       
       -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
       rec_Data   : in    sl; --
       rec_En     : in    sl; --
       driver_En  : in    sl; --
-      driver_Data : in    sl; --
+      driver_Data : in   sl; --
       
       
       -- Boot Memory Ports
@@ -70,9 +70,9 @@ end LsstAcFilterRelay;
 
 architecture top_level of LsstAcFilterRelay is
 
-   constant SYS_CLK_FREQ_C   : real                                         := 156.0E+6;
+   constant SYS_CLK_FREQ_C   : real                                         := 125.0E+6;
    constant AXI_CONFIG_C     : AxiLiteCrossbarMasterConfigArray(6 downto 0) := genAxiLiteConfig(7, x"0000_0000", 22, 18);
-   constant PDU5V_INDEX_C    : natural                                      := 1;
+   constant RELAY_INDEX_C    : natural                                      := 0;
 
    signal axilClk          : sl;
    signal axilRst          : sl;
@@ -89,6 +89,8 @@ begin
    U_Core : entity work.LsstPwrCtrlCore
       generic map (
          TPD_G        => TPD_G,
+         OVERRIDE_MAC_ADDR_G   => x"00_00_16_56_00_08",  -- 08:00:56:16:00:00      
+         OVERRIDE_IP_ADDR_G    => x"0A_01_A8_C0",        -- 192.168.1.10 
          BUILD_INFO_G => BUILD_INFO_G)
       port map (
          -- Register Interface
@@ -142,15 +144,15 @@ begin
       generic map (
          TPD_G           => TPD_G,
          AXI_CLK_FREQ_C  => SYS_CLK_FREQ_C,
-         AXI_BASE_ADDR_G => AXI_CONFIG_C(PDU5V_INDEX_C).baseAddr)
+         AXI_BASE_ADDR_G => AXI_CONFIG_C(RELAY_INDEX_C).baseAddr)
       port map (
          -- AXI-Lite Interface
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(PDU5V_INDEX_C),
-         axilReadSlave   => axilReadSlaves(PDU5V_INDEX_C),
-         axilWriteMaster => axilWriteMasters(PDU5V_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PDU5V_INDEX_C),
+         axilReadMaster  => axilReadMasters(RELAY_INDEX_C),
+         axilReadSlave   => axilReadSlaves(RELAY_INDEX_C),
+         axilWriteMaster => axilWriteMasters(RELAY_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(RELAY_INDEX_C),
 
         -- Relay Okay signals
          relOK           => relOK,      --relay Okay signal to 
