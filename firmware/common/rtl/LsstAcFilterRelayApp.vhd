@@ -14,7 +14,7 @@
 -- File       : LsstAcFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-02-04
--- Last update: 2017-08-02
+-- Last update: 2018-03-08
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -- 
@@ -41,127 +41,66 @@ use work.AxiLitePkg.all;
 
 
 entity LsstAcFilterRelayApp is
-  generic (
-    TPD_G            : time            := 1ns;
-    AXI_BASE_ADDR_G    : slv(31 downto 0)        := x"00000000";
-    AXI_CLK_FREQ_C   : real            := 156.0E+6;
-    AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C
-
-    );
-  port (
+   generic (
+      TPD_G          : time := 1ns;
+      AXI_CLK_FREQ_C : real := 156.0E+6);
+   port (
 
 -- Slave AXI-Lite Interface
-    axilClk         : in  sl;
-    axilRst         : in  sl;
-    axilReadMaster  : in  AxiLiteReadMasterType;
-    axilReadSlave   : out AxiLiteReadSlaveType;
-    axilWriteMaster : in  AxiLiteWriteMasterType;
-    axilWriteSlave  : out AxiLiteWriteSlaveType;
+      axilClk         : in  sl;
+      axilRst         : in  sl;
+      axilReadMaster  : in  AxiLiteReadMasterArray(1 downto 0);
+      axilReadSlave   : out AxiLiteReadSlaveArray(1 downto 0);
+      axilWriteMaster : in  AxiLiteWriteMasterArray(1 downto 0);
+      axilWriteSlave  : out AxiLiteWriteSlaveArray(1 downto 0);
 
 -- Relay Okay signals
-    relOK : out slv (11 downto 0);      --relay Okay signal to 
+      relOK : out slv (11 downto 0);    --relay Okay signal to 
 
-    
+
 -- SN65HVD1780QDRQ1 interface (RS485 transceiver)
-    rec_Data    : in    sl; --
-    rec_En      : in    sl; --
-    driver_En   : in    sl; --
-    driver_Data : in    sl -- 
-    
-    );
+      rec_Data    : in sl;              --
+      rec_En      : in sl;              --
+      driver_En   : in sl;              --
+      driver_Data : in sl               -- 
+
+      );
 end entity LsstAcFilterRelayApp;
 
 architecture Behavioral of LsstAcFilterRelayApp is
 
- 
-  -------------------------------------------------------------------------------------------------
-  -- AXI Lite Config and Signals
-  -------------------------------------------------------------------------------------------------
 
-  constant BOARD_INDEX_C : natural := 0;
-
-  constant NUM_AXI_MASTERS_C : natural := 6;
-
-  constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := (
-    BOARD_INDEX_C   => (
-      baseAddr      => AXI_BASE_ADDR_G + x"0000_0000",
-      addrBits      => 12,
-      connectivity  => X"0001"),
-    BOARD_INDEX_C+1 => (
-      baseAddr      => AXI_BASE_ADDR_G + x"0000_1000",
-      addrBits      => 12,
-      connectivity  => X"0001"),
-    BOARD_INDEX_C+2 => (
-      baseAddr      => AXI_BASE_ADDR_G + x"0000_2000",
-      addrBits      => 12,
-      connectivity  => X"0001"),
-    BOARD_INDEX_C+3 => (
-      baseAddr      => AXI_BASE_ADDR_G + x"0000_3000",
-      addrBits      => 12,
-      connectivity  => X"0001"),
-    BOARD_INDEX_C+4 => (
-      baseAddr      => AXI_BASE_ADDR_G + x"0000_4000",
-      addrBits      => 12,
-      connectivity  => X"0001"),
-    BOARD_INDEX_C+5 => (
-      baseAddr      => AXI_BASE_ADDR_G + x"0000_5000",
-      addrBits      => 12,
-      connectivity  => X"0001")
-    );
-
-  signal locAxilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-  signal locAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-  signal locAxilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-  signal locAxilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   -------------------------------------------------------------------------------------------------
+   -- AXI Lite Config and Signals
+   -------------------------------------------------------------------------------------------------
 
 begin
 
 
-  ---------------------------
-  -- AXI-Lite Crossbar Module
-  ---------------------------        
-  U_Xbar : entity work.AxiLiteCrossbar
-    generic map (
-      TPD_G              => TPD_G,
-      DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
-      NUM_SLAVE_SLOTS_G  => 1,
-      NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
-      MASTERS_CONFIG_G   => AXI_CROSSBAR_MASTERS_CONFIG_C)
-    port map (
-      axiClk              => axilClk,
-      axiClkRst           => axilRst,
-      sAxiWriteMasters(0) => axilWriteMaster,
-      sAxiWriteSlaves(0)  => axilWriteSlave,
-      sAxiReadMasters(0)  => axilReadMaster,
-      sAxiReadSlaves(0)   => axilReadSlave,
-      mAxiWriteMasters    => LocAxilWriteMasters,
-      mAxiWriteSlaves     => LocAxilWriteSlaves,
-      mAxiReadMasters     => LocAxilReadMasters,
-      mAxiReadSlaves      => LocAxilReadSlaves);
+   ---------------------------
+   -- Relay register
+   ---------------------------  
+   U_RelayReg : entity work.RelayReg
+      generic map(
+         TPD_G => TPD_G
+       -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
+         )
+      port map (
+         -- Slave AXI-Lite Interface
+         axilClk         => axilClk,
+         axilRst         => axilRst,
+         axilReadMaster  => axilReadMaster(0),
+         axilReadSlave   => axilReadSlave(0),
+         axilWriteMaster => axilWriteMaster(0),
+         axilWriteSlave  => axilWriteSlave(0),
 
-  ---------------------------
-  -- Relay register
-  ---------------------------  
- U_RelayReg : entity work.RelayReg
-    generic map(
-     TPD_G            => TPD_G
-    -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
-     )
-   port map ( 
-     -- Slave AXI-Lite Interface
-      axilClk             => axilClk,
-      axilRst             => axilRst,
-      axilReadMaster      => axilReadMaster,
-      axilReadSlave       => axilReadSlave,
-      axilWriteMaster     => axilWriteMaster,
-      axilWriteSlave      => axilWriteSlave,
-     
-     -- Relay Control    
-      relOK               => relOK
-     );
-  
-  
-  
+         -- Relay Control    
+         relOK => relOK
+         );
+
+   -- Use AXI index 1 for MODBUS bridge
+
+
 end Behavioral;
 
 
