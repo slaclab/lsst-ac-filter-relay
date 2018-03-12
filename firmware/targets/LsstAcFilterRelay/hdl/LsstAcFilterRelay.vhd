@@ -128,10 +128,10 @@ begin
          -- AXI-Lite Interface
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(RELAY_INDEX_C),
-         axilReadSlave   => axilReadSlaves(RELAY_INDEX_C),
-         axilWriteMaster => axilWriteMasters(RELAY_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(RELAY_INDEX_C),
+         axilReadMaster  => axilReadMasters,
+         axilReadSlave   => axilReadSlaves,
+         axilWriteMaster => axilWriteMasters,
+         axilWriteSlave  => axilWriteSlaves,
 
          -- Relay Okay signals
          relOK => relOK,                --relay Okay signal to 

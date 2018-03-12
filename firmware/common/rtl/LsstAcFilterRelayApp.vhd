@@ -49,10 +49,10 @@ entity LsstAcFilterRelayApp is
 -- Slave AXI-Lite Interface
       axilClk         : in  sl;
       axilRst         : in  sl;
-      axilReadMaster  : in  AxiLiteReadMasterArray(1 downto 0);
-      axilReadSlave   : out AxiLiteReadSlaveArray(1 downto 0);
-      axilWriteMaster : in  AxiLiteWriteMasterArray(1 downto 0);
-      axilWriteSlave  : out AxiLiteWriteSlaveArray(1 downto 0);
+      axilReadMaster  : in  AxiLiteReadMasterArray(6 downto 0);
+      axilReadSlave   : out AxiLiteReadSlaveArray(6 downto 0);
+      axilWriteMaster : in  AxiLiteWriteMasterArray(6 downto 0);
+      axilWriteSlave  : out AxiLiteWriteSlaveArray(6 downto 0);
 
 -- Relay Okay signals
       relOK : out slv (11 downto 0);    --relay Okay signal to 
