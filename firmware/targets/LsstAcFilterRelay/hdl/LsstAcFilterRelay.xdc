@@ -71,8 +71,6 @@ set_property DRIVE 12 [get_ports {relOK[1]}]
 set_property DRIVE 12 [get_ports {relOK[0]}]
 set_property DRIVE 12 [get_ports {relOK[11]}]
 set_property IOSTANDARD LVCMOS33 [get_ports driver_Data]
-set_property PACKAGE_PIN A8 [get_ports ethRxN]
-set_property PACKAGE_PIN F6 [get_ports ethClkP]
 set_property PACKAGE_PIN Y16 [get_ports rec_Data]
 set_property PACKAGE_PIN AB17 [get_ports driver_Data]
 set_property PACKAGE_PIN AB16 [get_ports driver_En]
@@ -80,3 +78,16 @@ set_property PACKAGE_PIN AA16 [get_ports rec_En]
 set_property IOSTANDARD LVCMOS33 [get_ports driver_En]
 set_property IOSTANDARD LVCMOS33 [get_ports rec_En]
 set_property IOSTANDARD LVCMOS33 [get_ports rec_Data]
+
+
+###########################################################################################
+
+set_property -dict { PACKAGE_PIN F6} [get_ports { ethClkP}]
+set_property -dict { PACKAGE_PIN E6} [get_ports { ethClkN}]
+set_property -dict { PACKAGE_PIN B4 } [get_ports { ethTxP}]
+set_property -dict { PACKAGE_PIN A4 } [get_ports { ethTxN}]
+set_property -dict { PACKAGE_PIN B8 } [get_ports { ethRxP}]
+set_property -dict { PACKAGE_PIN A8 } [get_ports { ethRxN}]
+
+###########################################################################################
+
