@@ -38,7 +38,8 @@ use unisim.vcomponents.all;
 
 entity LsstAcFilterRelay is
    generic (
-      TPD_G        : time := 1 ns;
+      TPD_G        : time               := 1 ns;
+      OVERRIDE_ETH_CONFIG_G : boolean   := true;
       BUILD_INFO_G : BuildInfoType);
    port (
       -- Relay Okay signal --
@@ -88,10 +89,11 @@ begin
    ---------------------
    U_Core : entity work.LsstPwrCtrlCore
       generic map (
-         TPD_G               => TPD_G,
-         OVERRIDE_MAC_ADDR_G => x"00_00_16_56_00_08",  -- 08:00:56:16:00:00      
-         OVERRIDE_IP_ADDR_G  => x"0A_01_A8_C0",        -- 192.168.1.10 
-         BUILD_INFO_G        => BUILD_INFO_G)
+         TPD_G                 => TPD_G,
+         OVERRIDE_ETH_CONFIG_G => OVERRIDE_ETH_CONFIG_G,
+         OVERRIDE_MAC_ADDR_G   => x"00_00_16_56_00_08",  -- 08:00:56:16:00:00      
+         OVERRIDE_IP_ADDR_G    => x"0A_01_A8_C0",        -- 192.168.1.10 
+         BUILD_INFO_G          => BUILD_INFO_G)
       port map (
          -- Register Interface
          axilClk          => axilClk,
