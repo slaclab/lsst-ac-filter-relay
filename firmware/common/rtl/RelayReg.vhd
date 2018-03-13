@@ -6,14 +6,14 @@
 --
 --      Copyright(c) SLAC National Accelerator Laboratory 2000
 --
---      Author: 
---      Created on: 
---      Last change: 
+--      Author: Van Xiong
+--      Created on: 2018-02-04
+--      Last change: 2018-02-28
 --
 -------------------------------------------------------------------------------
 -- File       : LSStACFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2018-02-28
+-- Created    : 2018-02-04
 -- Last update: 2018-02-28
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
