@@ -24,7 +24,7 @@ import pyrogue.gui
 import PyQt4.QtGui
 import argparse
 import time
-import Lsst5vDcPdu as board
+import LsstAcFilterRelay as board
 
 # Set the argument parser
 parser = argparse.ArgumentParser()

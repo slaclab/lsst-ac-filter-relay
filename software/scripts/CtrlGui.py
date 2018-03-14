@@ -23,7 +23,7 @@ import pyrogue as pr
 import pyrogue.gui
 import PyQt4.QtGui
 import argparse
-import Lsst5vDcPdu as board
+import LsstAcFilterRelay as board
 
 # Set the argument parser
 parser = argparse.ArgumentParser()

@@ -21,7 +21,7 @@ import rogue
 import pyrogue
 import pyrogue.simulation
 import pyrogue.protocols
-import Lsst5vDcPdu as board
+import LsstAcFilterRelay as board
   
 class Top(pyrogue.Device):
     def __init__(   self,       
