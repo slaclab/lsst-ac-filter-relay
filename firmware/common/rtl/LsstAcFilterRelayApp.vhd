@@ -99,24 +99,24 @@ begin
          );
 
    -- Use AXI index 1 for MODBUS bridge
-	U_Modbus : entity work.Modbus
-      generic map(
-         TPD_G => TPD_G
-       -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
-         )
-      port map (
-         -- Slave AXI-Lite Interface
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMaster(1),
-         axilReadSlave   => axilReadSlave(1),
-         axilWriteMaster => axilWriteMaster(1),
-         axilWriteSlave  => axilWriteSlave(1),
+--	U_Modbus : entity work.Modbus
+--      generic map(
+--         TPD_G => TPD_G
+--       -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
+--         )
+--      port map (
+--         -- Slave AXI-Lite Interface
+--         axilClk         => axilClk,
+--         axilRst         => axilRst,
+--         axilReadMaster  => axilReadMaster(1),
+--         axilReadSlave   => axilReadSlave(1),
+--         axilWriteMaster => axilWriteMaster(1),
+--         axilWriteSlave  => axilWriteSlave(1),
 
-         -- MODBUS Control    
+--         -- MODBUS Control    
 
 		 
-         );
+--         );
 		 
 end Behavioral;
 
