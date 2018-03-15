@@ -2,7 +2,7 @@
 --                                                             --
 -----------------------------------------------------------------
 --
---      LsstAcFilterRelay.vhd -
+--      RelayReg.vhd -
 --
 --      Copyright(c) SLAC National Accelerator Laboratory 2000
 --
@@ -11,7 +11,7 @@
 --      Last change: 2018-02-28
 --
 -------------------------------------------------------------------------------
--- File       : LSStACFilterRelay.vhd
+-- File       : RelayReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-02-04
 -- Last update: 2018-02-28
@@ -34,8 +34,8 @@ use work.AxiLitePkg.all;
 
 entity RelayReg is
 generic (
-	TPD_G            : time            := 1 ns;
-    REL_OUT_RESET_G  : slv(11 downto 0) := "000000000000");
+	  TPD_G            : time            := 1 ns;
+   --REL_OUT_RESET_G  : slv(11 downto 0) := "000000000000");
 Port ( 
 
 -- Slave AXI-Lite Interface

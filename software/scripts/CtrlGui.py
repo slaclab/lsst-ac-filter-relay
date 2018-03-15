@@ -66,7 +66,7 @@ base.add(board.Top(
 
 # Start the system
 base.start(pollEn=args.pollEn)
-base.Top.Fpga.Core.AxiVersion.printStatus()
+#base.Top.Fpga.Core.AxiVersion.printStatus() ############################################ uncomment this later
 
 # Create GUI
 appTop = PyQt4.QtGui.QApplication(sys.argv)
