@@ -79,7 +79,7 @@ architecture top_level of LsstAcFilterRelay is
    signal axilRst          : sl;
    signal axilWriteMasters : AxiLiteWriteMasterArray(6 downto 0);
    signal axilWriteSlaves  : AxiLiteWriteSlaveArray(6 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
-   signal axilReadMasters  : AxiLiteReadMasterArray(6 downto 0);
+   signal axilReadMasters  : AxiLiteReadMasterArray(6 downto 0) ;
    signal axilReadSlaves   : AxiLiteReadSlaveArray(6 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
 
 begin
@@ -122,28 +122,54 @@ begin
    ---------------------------------
    -- AXI-Lite: Lsst Ac Filter Relay Application
    ---------------------------------
-   U_App : entity work.LsstAcFilterRelayApp
-      generic map (
-         TPD_G          => TPD_G,
-         AXI_CLK_FREQ_C => SYS_CLK_FREQ_C)
-      port map (
-         -- AXI-Lite Interface
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters,
-         axilReadSlave   => axilReadSlaves,
-         axilWriteMaster => axilWriteMasters,
-         axilWriteSlave  => axilWriteSlaves,
+--   U_App : entity work.LsstAcFilterRelayApp
+--      generic map (
+--         TPD_G          => TPD_G,
+--         AXI_CLK_FREQ_C => SYS_CLK_FREQ_C)
+--      port map (
+--         -- AXI-Lite Interface
+--         axilClk         => axilClk,
+--         axilRst         => axilRst,
+--         axilReadMaster  => axilReadMasters(1 downto 0),
+--         axilReadSlave   => axilReadSlaves(1 downto 0),
+--         axilWriteMaster => axilWriteMasters(1 downto 0),
+--         axilWriteSlave  => axilWriteSlaves(1 downto 0),
 
-         -- Relay Okay signals
-         relOK => relOK,                --relay Okay signal to 
+--         -- Relay Okay signals
+--         relOK => relOK,                --relay Okay signal to 
 
-         -- SN65HVD1780QDRQ1 interface (RS485 transceiver)
-         rec_Data    => rec_Data,
-         rec_En      => rec_En,
-         driver_En   => driver_En,
-         driver_Data => driver_Data
+--         -- SN65HVD1780QDRQ1 interface (RS485 transceiver)
+--         rec_Data    => rec_Data,
+--         rec_En      => rec_En,
+--         driver_En   => driver_En,
+--         driver_Data => driver_Data
 
-         );
+--         );
+         
+      
+   ---------------------------
+   -- Relay register
+   ---------------------------  
+U_RelayReg : entity work.RelayReg
+   generic map(
+      TPD_G => TPD_G
+      )
+   port map (
+      -- Slave AXI-Lite Interface
+      axilClk         => axilClk,
+      axilRst         => axilRst,
+     axilReadMaster  => axilReadMasters(0),
+     axilReadSlave   => axilReadSlaves(0),
+     axilWriteMaster => axilWriteMasters(0),
+     axilWriteSlave  => axilWriteSlaves(0),
+
+      -- Relay Control    
+      relOK => relOK
+      );
+      
+      
+      
+      
+         
 
 end top_level;

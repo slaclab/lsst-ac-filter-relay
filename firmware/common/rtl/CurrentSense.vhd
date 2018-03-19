@@ -32,9 +32,6 @@ entity CurrentSense is
 	  --Clock and Reset
 	  clk		: in sl;
 	  rst		: in sl;
-	  --AXIS interace
-      clk             : in  sl;
-      rst             : in  sl;
       -- AXIS interface
       txMasters       : out AxiStreamMasterArray(3 downto 0);
       txSlaves        : in  AxiStreamSlaveArray(3 downto 0);

@@ -13,25 +13,12 @@
 #######################
 
 
-#set_property -dict { PACKAGE_PIN L12    IOSTANDARD LVCMOS33 } [get_ports { BOOT_SCK}]
-#set_property -dict { PACKAGE_PIN P22    IOSTANDARD LVCMOS33 } [get_ports { BOOT_D[O]}]
-#set_property -dict { PACKAGE_PIN R22    IOSTANDARD LVCMOS33 } [get_ports { BOOT_D[1]}]
-#set_property -dict { PACKAGE_PIN P21    IOSTANDARD LVCMOS33 } [get_ports { BOOT_D[2]}]
-#set_property -dict { PACKAGE_PIN R21    IOSTANDARD LVCMOS33 } [get_ports { BOOT_D[3]}]
-
 set_property -dict {PACKAGE_PIN P22 IOSTANDARD LVCMOS33} [get_ports bootMosi]
 set_property -dict {PACKAGE_PIN R22 IOSTANDARD LVCMOS33} [get_ports bootMiso]
 set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVCMOS33} [get_ports bootCsL]
 
 #set_property -dict { PACKAGE_PIN F10    IOSTANDARD LVCMOS33 } [get_ports { ethClkP}]
 #set_property -dict { PACKAGE_PIN E10    IOSTANDARD LVCMOS33 } [get_ports { ethClkN}]
-
-#set_property -dict { PACKAGE_PIN B4     IOSTANDARD LVCMOS33 } [get_ports { ethTxP}]
-#set_property -dict { PACKAGE_PIN A4     IOSTANDARD LVCMOS33 } [get_ports { ethTxN}]
-#set_property -dict { PACKAGE_PIN B8     IOSTANDARD LVCMOS33 } [get_ports { ethRxP}]
-#set_property -dict { PACKAGE_PIN A8     IOSTANDARD LVCMOS33 } [get_ports { ethRxN}]
-
-
 
 
 set_property IOSTANDARD LVCMOS33 [get_ports {relOK[0]}]
@@ -70,6 +57,7 @@ set_property DRIVE 12 [get_ports {relOK[2]}]
 set_property DRIVE 12 [get_ports {relOK[1]}]
 set_property DRIVE 12 [get_ports {relOK[0]}]
 set_property DRIVE 12 [get_ports {relOK[11]}]
+
 set_property IOSTANDARD LVCMOS33 [get_ports driver_Data]
 set_property PACKAGE_PIN Y16 [get_ports rec_Data]
 set_property PACKAGE_PIN AB17 [get_ports driver_Data]

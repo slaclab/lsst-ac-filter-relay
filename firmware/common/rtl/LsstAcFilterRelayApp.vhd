@@ -43,16 +43,19 @@ use work.AxiLitePkg.all;
 entity LsstAcFilterRelayApp is
    generic (
       TPD_G          : time := 1ns;
-      AXI_CLK_FREQ_C : real := 156.0E+6);
+	  AXI_BASE_ADDR_G : slv(31 downto 0) := x"00000000";
+	  AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C;
+      AXI_CLK_FREQ_C : real := 125.0E+6);
    port (
 
 -- Slave AXI-Lite Interface
-      axilClk         : in  sl;
-      axilRst         : in  sl;
-      axilReadMaster  : in  AxiLiteReadMasterArray(6 downto 0);
-      axilReadSlave   : out AxiLiteReadSlaveArray(6 downto 0);
-      axilWriteMaster : in  AxiLiteWriteMasterArray(6 downto 0);
-      axilWriteSlave  : out AxiLiteWriteSlaveArray(6 downto 0);
+      axilClk         : in    sl;
+      axilRst         : in    sl;
+      axilReadMaster  : in    AxiLiteReadMasterArray(1 downto 0);
+      axilReadSlave   : out   AxiLiteReadSlaveArray(1 downto 0);
+      axilWriteMaster : in    AxiLiteWriteMasterArray(1 downto 0);
+	  axilWriteSlave  : out   AxiLiteWriteSlaveArray(1 downto 0);
+
 
 -- Relay Okay signals
       relOK : out slv (11 downto 0);    --relay Okay signal to 
@@ -70,11 +73,10 @@ end entity LsstAcFilterRelayApp;
 architecture Behavioral of LsstAcFilterRelayApp is
 
 
-   -------------------------------------------------------------------------------------------------
-   -- AXI Lite Config and Signals
-   -------------------------------------------------------------------------------------------------
-
+  
+  
 begin
+
 
 
    ---------------------------
@@ -83,40 +85,43 @@ begin
    U_RelayReg : entity work.RelayReg
       generic map(
          TPD_G => TPD_G
-       -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
          )
       port map (
          -- Slave AXI-Lite Interface
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMaster(0),
-         axilReadSlave   => axilReadSlave(0),
-         axilWriteMaster => axilWriteMaster(0),
-         axilWriteSlave  => axilWriteSlave(0),
+        axilReadMaster  => axilReadMaster(0),
+        axilReadSlave   => axilReadSlave(0),
+        axilWriteMaster => axilWriteMaster(0),
+        axilWriteSlave  => axilWriteSlave(0),
+
 
          -- Relay Control    
          relOK => relOK
          );
 
-   -- Use AXI index 1 for MODBUS bridge
---	U_Modbus : entity work.Modbus
---      generic map(
---         TPD_G => TPD_G
---       -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
---         )
---      port map (
---         -- Slave AXI-Lite Interface
---         axilClk         => axilClk,
---         axilRst         => axilRst,
---         axilReadMaster  => axilReadMaster(1),
---         axilReadSlave   => axilReadSlave(1),
---         axilWriteMaster => axilWriteMaster(1),
---         axilWriteSlave  => axilWriteSlave(1),
-
---         -- MODBUS Control    
-
 		 
---         );
+		 
+   -- Use AXI index 1 for MODBUS bridge
+   
+   
+	U_CurrentSense : entity work.CurrentSenseReg
+     generic map(
+        TPD_G => TPD_G
+      -- AXI_ERROR_RESP_G => AXI_RESP_DECERR_C
+        )
+     port map (
+        -- Slave AXI-Lite Interface
+        axilClk         => axilClk,
+        axilRst         => axilRst,
+        axilReadMaster  => axilReadMaster(1),
+        axilReadSlave   => axilReadSlave(1),
+        axilWriteMaster => axilWriteMaster(1),
+        axilWriteSlave  => axilWriteSlave(1)
+
+        -- MODBUS Control    
+       
+        );
 		 
 end Behavioral;
 

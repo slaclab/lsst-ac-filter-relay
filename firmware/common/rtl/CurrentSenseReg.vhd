@@ -35,9 +35,8 @@ use work.AxiLitePkg.all;
 
 entity CurrentSenseReg is
 generic (
-	TPD_G              : time             := 1 ns;
-    --MBDATA_RESET_G  : slv(11 downto 0) := x"00_00_0000_0000_0000);
-	--MBID_G			       : slv(7 downto 0)  := "0001" --default ID of CMS600 is 1
+	TPD_G              : time             := 1 ns);
+ 
 Port ( 
 
 -- Slave AXI-Lite Interface
@@ -49,7 +48,7 @@ Port (
     axilWriteSlave  : out AxiLiteWriteSlaveType;
 
 -- ModbusCtrl
-	mbDataTx		  : out slv(63 downto 0);
+	mbDataTx		  : out slv(63 downto 0)
 			--mbid          : out slv(7 downto 0);
 			--functionCode  : out slv(7 downto 0);
 			--sensorAddress : out slv(15 downto 0);
@@ -78,7 +77,7 @@ architecture Behavioral of CurrentSenseReg is
       signal rin : RegType;
       
 begin    
-    mbDataTx  <= r.mobusDataTx;
+   
  
  --start of sequential block----------------------------
     seq : process (axilClk) is
@@ -107,6 +106,10 @@ begin
       end if;
       
       rin <= v;
+     
+      mbDataTx  <= r.mobusDataTx;
+      axilWriteSlave  <= r.axilWriteSlave;      
+      axilReadSlave  <= r.axilReadSlave;  
      
     end process comb;
 --end of combinational block-----------------------------    

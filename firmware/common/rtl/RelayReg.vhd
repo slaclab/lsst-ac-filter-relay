@@ -35,7 +35,7 @@ use work.AxiLitePkg.all;
 entity RelayReg is
 generic (
 	  TPD_G            : time            := 1 ns);
-   --REL_OUT_RESET_G  : slv(11 downto 0) := "000000000000");
+	  
 Port ( 
 
 -- Slave AXI-Lite Interface
@@ -61,7 +61,7 @@ architecture Behavioral of RelayReg is
     end record;   
       
     constant REG_INIT_C : RegType := (
-      relayOK      => x"000",
+      relayOK      => x"A0A",
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C
       ); 
@@ -78,7 +78,7 @@ begin
     seq : process (axilClk) is
     begin
       if (rising_edge(axilClk)) then
-          r <= rin;
+          r <= rin after TPD_G;
       end if;
     end process seq;
 --end of sequential block--------------------------------
@@ -105,7 +105,7 @@ begin
     relOK  <= r.relayOK;      
     axilWriteSlave  <= r.axilWriteSlave;      
     axilReadSlave  <= r.axilReadSlave;      
-     
+    
     end process comb;
 --end of combinational block-----------------------------    
 end architecture Behavioral;
