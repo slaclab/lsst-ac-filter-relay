@@ -61,7 +61,7 @@ architecture Behavioral of RelayReg is
     end record;   
       
     constant REG_INIT_C : RegType := (
-      relayOK      => x"A0A",
+      relayOK      => x"000",
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C
       ); 
@@ -93,7 +93,20 @@ begin
       
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
       
-      axiSlaveRegister(axilEp, X"00", 0, v.relayOK);  -- Register 0 -- 12 on/off bit in 11-0  
+      --axiSlaveRegister(axilEp, X"00", 0, v.relayOK);  -- Register 0 -- 12 on/off bit in 11-0  
+      axiSlaveRegister(axilEp, X"00", 0, v.relayOK(0));
+      axiSlaveRegister(axilEp, X"04", 0, v.relayOK(1));
+      axiSlaveRegister(axilEp, X"08", 0, v.relayOK(2));
+      axiSlaveRegister(axilEp, X"0C", 0, v.relayOK(3));
+      axiSlaveRegister(axilEp, X"10", 0, v.relayOK(4));
+      axiSlaveRegister(axilEp, X"14", 0, v.relayOK(5));
+      axiSlaveRegister(axilEp, X"18", 0, v.relayOK(6));
+      axiSlaveRegister(axilEp, X"1C", 0, v.relayOK(7));
+      axiSlaveRegister(axilEp, X"20", 0, v.relayOK(8));
+      axiSlaveRegister(axilEp, X"24", 0, v.relayOK(9));
+      axiSlaveRegister(axilEp, X"28", 0, v.relayOK(10));
+      axiSlaveRegister(axilEp, X"2C", 0, v.relayOK(11));
+      
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);   
       
       if (axilRst = '1') then 

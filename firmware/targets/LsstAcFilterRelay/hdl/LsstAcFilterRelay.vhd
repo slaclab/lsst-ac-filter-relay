@@ -91,8 +91,8 @@ begin
       generic map (
          TPD_G                 => TPD_G,
          OVERRIDE_ETH_CONFIG_G => OVERRIDE_ETH_CONFIG_G,
-         OVERRIDE_MAC_ADDR_G   => x"00_00_16_56_00_08",  -- 08:00:56:16:00:00      
-         OVERRIDE_IP_ADDR_G    => x"0A_01_A8_C0",        -- 192.168.1.10 
+         OVERRIDE_MAC_ADDR_G   => x"3f_48_00_56_00_08",  --08:00:56:00:48:3f     --x"00_00_16_56_00_08",  -- 08:00:56:16:00:00     
+         OVERRIDE_IP_ADDR_G    => x"3f_01_A8_C0", --192.168.1.63      --x"0A_01_A8_C0",        -- 192.168.1.10 
          BUILD_INFO_G          => BUILD_INFO_G)
       port map (
          -- Register Interface
