@@ -63,10 +63,9 @@ entity LsstAcFilterRelayApp is
 
 -- SN65HVD1780QDRQ1 interface (RS485 transceiver)
       rec_Data    : in sl;              --
-      rec_En      : in sl;              --
-      driver_En   : in sl;              --
+      rec_En      : out sl;             --
       driver_Data : in sl               -- 
-
+	  driver_En   : out sl;             --
       );
 end entity LsstAcFilterRelayApp;
 
@@ -77,7 +76,9 @@ architecture Behavioral of LsstAcFilterRelayApp is
   
 begin
 
-
+   -----------------------------------------------------------
+   -- AXI entity
+   -----------------------------------------------------------
 
    ---------------------------
    -- Relay register
@@ -104,7 +105,9 @@ begin
 		 
    -- Use AXI index 1 for MODBUS bridge
    
-   
+   ---------------------------
+   -- Current Sense register
+   --------------------------- 
 	U_CurrentSense : entity work.CurrentSenseReg
      generic map(
         TPD_G => TPD_G
@@ -120,8 +123,30 @@ begin
         axilWriteSlave  => axilWriteSlave(1)
 
         -- MODBUS Control    
-       
+        mbDataTx => mbDataTx
         );
+		
+	
+   -----------------------------------------------------------
+   -- NON-AXI entity
+   -----------------------------------------------------------	
+    U_Modbus : entity work.Modbus
+      generic map (
+	    TPD_G		: time		:= 1 ns
+	  )
+	
+	  port map (
+	    rec_Data	=> rec_Data,
+		rec_En		=> rec_En,
+		driver_En	=> driver_En,
+		driver_Data	=> driver_Data,
+		
+		mbDataTx 	=> mbDataTx
+	  );
+	
+   
+   
+   
 		 
 end Behavioral;
 

@@ -61,7 +61,7 @@ architecture Behavioral of RelayReg is
     end record;   
       
     constant REG_INIT_C : RegType := (
-      relayOK      => x"000",
+      relayOK        => x"000",
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C
       ); 

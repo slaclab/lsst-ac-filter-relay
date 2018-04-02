@@ -44,13 +44,15 @@ entity LsstAcFilterRelay is
    port (
       -- Relay Okay signal --
       relOK : out slv(11 downto 0) := x"000";  --
+      
+      -- Modbus signals --
+      mbDataTx : out slv(47 downto 0);
 
       -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
       rec_Data    : in sl;              --
-      rec_En      : in sl;              --
-      driver_En   : in sl;              --
-      driver_Data : in sl;              --
-
+      rec_En      : out sl;             --
+      driver_Data : out sl;              --
+      driver_En   : out sl;             --
 
       -- Boot Memory Ports
       bootCsL  : out sl;
@@ -64,6 +66,7 @@ entity LsstAcFilterRelay is
       ethRxN  : in  sl;
       ethTxP  : out sl;
       ethTxN  : out sl;
+      
       -- XADC Ports
       vPIn    : in  sl;
       vNIn    : in  sl);
@@ -81,6 +84,14 @@ architecture top_level of LsstAcFilterRelay is
    signal axilWriteSlaves  : AxiLiteWriteSlaveArray(6 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
    signal axilReadMasters  : AxiLiteReadMasterArray(6 downto 0) ;
    signal axilReadSlaves   : AxiLiteReadSlaveArray(6 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
+   
+   
+   signal mbData         : slv(47 downto 0);
+   
+   signal temp1 : sl; --remove
+   signal temp2 : sl;--remove
+   signal temp3 : sl;--remove
+   signal temp4 : slv(7 downto 0);
 
 begin
 
@@ -96,28 +107,28 @@ begin
          BUILD_INFO_G          => BUILD_INFO_G)
       port map (
          -- Register Interface
-         axilClk          => axilClk,
-         axilRst          => axilRst,
-         axilReadMasters  => axilReadMasters,
-         axilReadSlaves   => axilReadSlaves,
-         axilWriteMasters => axilWriteMasters,
-         axilWriteSlaves  => axilWriteSlaves,
+         axilClk          => axilClk,           --[out]
+         axilRst          => axilRst,           --[out]
+         axilReadMasters  => axilReadMasters,   --[out]
+         axilReadSlaves   => axilReadSlaves,    --[int]
+         axilWriteMasters => axilWriteMasters,  --[out]
+         axilWriteSlaves  => axilWriteSlaves,   --[int]
          -- Misc.
-         extRstL          => '1',
+         extRstL          => '1',               --[int]
          -- XADC Ports
-         vPIn             => vPIn,
-         vNIn             => vNIn,
+         vPIn             => vPIn,              --[int]
+         vNIn             => vNIn,              --[int]
          -- Boot Memory Ports
-         bootCsL          => bootCsL,
-         bootMosi         => bootMosi,
-         bootMiso         => bootMiso,
+         bootCsL          => bootCsL,           --[out]
+         bootMosi         => bootMosi,          --[out]
+         bootMiso         => bootMiso,          --[in]
          -- 1GbE Interface
-         ethClkP          => ethClkP,
-         ethClkN          => ethClkN,
-         ethRxP           => ethRxP,
-         ethRxN           => ethRxN,
-         ethTxP           => ethTxP,
-         ethTxN           => ethTxN);
+         ethClkP          => ethClkP,           --[in]
+         ethClkN          => ethClkN,           --[in]
+         ethRxP           => ethRxP,            --[in]
+         ethRxN           => ethRxN,            --[in]
+         ethTxP           => ethTxP,            --[out]
+         ethTxN           => ethTxN);           --[out]
 
    ---------------------------------
    -- AXI-Lite: Lsst Ac Filter Relay Application
@@ -155,21 +166,64 @@ U_RelayReg : entity work.RelayReg
       TPD_G => TPD_G
       )
    port map (
-      -- Slave AXI-Lite Interface
-      axilClk         => axilClk,
-      axilRst         => axilRst,
-     axilReadMaster  => axilReadMasters(0),
-     axilReadSlave   => axilReadSlaves(0),
-     axilWriteMaster => axilWriteMasters(0),
-     axilWriteSlave  => axilWriteSlaves(0),
+-- Slave AXI-Lite Interface
+     axilClk         => axilClk,              --[in]
+     axilRst         => axilRst,              --[in]
+     axilReadMaster  => axilReadMasters(0),   --[in]
+     axilReadSlave   => axilReadSlaves(0),    --[out]
+     axilWriteMaster => axilWriteMasters(0),  --[in]
+     axilWriteSlave  => axilWriteSlaves(0),   --[out]
 
-      -- Relay Control    
-      relOK => relOK
+-- Relay Control    
+      relOK => relOK                          --[out]
       );
       
       
+  ---------------------------
+  -- CurrentSense register
+  ---------------------------  
+U_CurrentSenseReg : entity work.CurrentSenseReg
+  generic map(
+     TPD_G => TPD_G
+     )
+  port map (
+     -- Slave AXI-Lite Interface
+    axilClk         => axilClk,             --[in]
+    axilRst         => axilRst,             --[in]
+    axilReadMaster  => axilReadMasters(1),  --[in]
+    axilReadSlave   => axilReadSlaves(1),   --[out]
+    axilWriteMaster => axilWriteMasters(1), --[in]
+    axilWriteSlave  => axilWriteSlaves(1),  --[out]
+
+     -- Relay Control    
+     mbDataTx => mbData                     --[out]
+     );     
       
-      
+
+-----------------------------------------------------------
+-- NON-AXI entity
+-----------------------------------------------------------	
+U_Modbus : entity work.ModbusMaster
+  generic map (
+    TPD_G		=> TPD_G
+  )
+
+  port map (
+-- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
+    rec_Data	=> rec_Data,            --[in]
+    rec_En		=> rec_En,              --[out]
+    driver_Data	=> driver_Data,         --[out]
+    driver_En	=> driver_En,           --[out]
+    
+-- Mobus Data for TX --    
+    mbDataTx 	=> mbData,              --[in]
+    
+-- clk & rst signal --   
+      clk     => axilClk,               --[in]
+      rst     => axilRst                --[in]
+  );
+	
+   
          
 
 end top_level;
