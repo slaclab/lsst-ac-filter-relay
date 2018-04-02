@@ -46,8 +46,8 @@ entity ModbusMaster is
    port (
 -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
        rec_Data    : in sl; 
-       rec_En      : out sl;
-       driver_Data : out sl;
+       rec_En      : out sl; --needs to be not(driver_en)
+       driver_Data : out sl; --needs to be not(rec_en)
        driver_En   : out sl;
    
    
@@ -93,29 +93,29 @@ begin
 -------------------------------------------------------------------------------------------------
   U_ModbusTx : entity work.ModbusTx
     generic map (
-      TPD_G		  => TPD_G,
-      TIMEOUT_G   => "100"
+      TPD_G		  => TPD_G
       )
     port map (
       clk			=> clk,
       rst           => rst,
       baud16x       => baud16x,
       wrData        => mbDataTx,
-      wrValid       => '0'
-     -- wrReady       => '0' 
+      wrValid       => '0',
+      wrReady       => driver_En,
+      tx            => driver_Data
       );
 
 -------------------------------------------------------------------------------------------------
 -- Modbus receiver
 -------------------------------------------------------------------------------------------------
-  U_ModbusRx : entity work.ModbusRx
-  generic map (
-    TPD_G          => TPD_G,
-    TIMEOUT_G   => "100"
-    )
-  port map (
+--  U_ModbusRx : entity work.ModbusRx
+--  generic map (
+--    TPD_G          => TPD_G,
+--    TIMEOUT_G   => "100"
+--    )
+--  port map (
  
-    );
+--    );
 
 
 end architecture rtl;
