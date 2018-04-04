@@ -94,8 +94,6 @@ architecture Behavioral of ModbusTx is
 	 signal rin : RegType;
 	 
      signal crcOut   : slv(15 downto 0);
-	 signal crcOutLo : slv(7 downto 0);
-	 signal crcOutHi : slv(7 downto 0);
      signal crcRem   : slv(15 downto 0);
 
      signal uartTxValid : sl;
@@ -149,22 +147,27 @@ architecture Behavioral of ModbusTx is
     begin
       v := r;
       
+      
+      v.crcValid :='0';
+      v.crcReset :='0';
+      
       case r.txState is
       
         when TX_INIT_S =>
           if (baud16x = '1') then
             v.charTime   := r.charTime + 1;
-            if (r.charTime = TIMEOUT_G) then
+            if (r.charTime = TIMEOUT_G) then    --Modbus requires silince of atleast 3.5 character time
               v.txState  := TX_IDLE_S;
               v.charTime := TIMEOUT_RESET_G;
             end if;
           end if;
       
         when TX_IDLE_S =>
-          v.wrReady   := '1';
+          v.wrReady    := '1';
           if (wrValid = '1' and r.wrReady = '1') then
-            v.wrReady := '0';
-            v.txState := TX_CALC_CRC_S;
+            v.wrReady  := '0';
+            v.crcReset := '1';          --reset crc before sending in the next data
+            v.txState  := TX_CALC_CRC_S;
           end if;
         
         when TX_CALC_CRC_S =>
@@ -173,7 +176,7 @@ architecture Behavioral of ModbusTx is
           v.txState  := TX_TRANSMIT_S;
           
         when TX_TRANSMIT_S =>
-          v.data := wrData & crcOutLo & crcOutHi;
+          v.data := wrData & crcout(7 downto 0) & crcOut(15 downto 8);
           
       end case;
     
