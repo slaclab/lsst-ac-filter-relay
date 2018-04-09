@@ -203,27 +203,47 @@ U_CurrentSenseReg : entity work.CurrentSenseReg
 -----------------------------------------------------------
 -- NON-AXI entity
 -----------------------------------------------------------	
-U_Modbus : entity work.ModbusMaster
-  generic map (
-    TPD_G		=> TPD_G
-  )
+--U_Modbus : entity work.ModbusMaster
+--  generic map (
+--    TPD_G		=> TPD_G
+--  )
 
-  port map (
--- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
-    rec_Data	=> rec_Data,            --[in]
-    rec_En		=> rec_En,              --[out]
-    driver_Data	=> driver_Data,         --[out]
-    driver_En	=> driver_En,           --[out]
+--  port map (
+---- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
+--    rec_Data	=> rec_Data,            --[in]
+--    rec_En		=> rec_En,              --[out]
+--    driver_Data	=> driver_Data,         --[out]
+--    driver_En	=> driver_En,           --[out]
     
--- Mobus Data for TX --    
-    mbDataTx 	=> mbData,              --[in]
+---- Mobus Data for TX --    
+--    mbDataTx 	=> mbData,              --[in]
     
--- clk & rst signal --   
-      clk     => axilClk,               --[in]
-      rst     => axilRst                --[in]
-  );
+---- clk & rst signal --   
+--      clk     => axilClk,               --[in]
+--      rst     => axilRst                --[in]
+--  );
 	
-   
+  
+U_ModbusRTU : entity work.ModbusRTU
+        generic map (
+           TPD_G             => TPD_G
+           )
+        port map (
+           clk     => axilClk,            -- [in]
+           rst     => axilRst,            -- [in]
+-- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
+           rx      => rec_Data,            --[in]
+           rx_En   => rec_En,             --[out]
+           tx      => driver_Data,        --[out]
+           tx_En   => driver_En,          --[out]
+           
+-- Mobus Data --    
+           wrData     => mbData,          --[in]
+           wrValid    => '1',             --[in]    --- still need to work on this
+          
+           rdReady    => '1'              --[in]    --- still need to work on this
+           );
+
          
 
 end top_level;
