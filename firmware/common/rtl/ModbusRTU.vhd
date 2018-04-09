@@ -30,10 +30,10 @@ entity ModbusRTU is
      --3.5 character-time = 28 bit
      --1 bit is 16 rising edge of the baud16x "clock"
      --therefore it will take 448 baud16x count to = 3.5 character time
-     TIMEOUT_G        : slv(8 downto 0) := x"1C0"; --  d'448=x'1C0
-     TIMEOUT_RESET_G  : slv(8 downto 0) := x"000";
+     TIMEOUT_G        : slv(11 downto 0) := x"1C0"; --  d'448=x'1C0
+     TIMEOUT_RESET_G  : slv(11 downto 0) := x"000";
      
-     RESP_TIMEOUT_G   : slv(9 downto 0) := x"1ff"; --arbitrary time to wait for response before timing out
+     RESP_TIMEOUT_G   : slv(11 downto 0) := x"fff"; --arbitrary time to wait for response before timing out
    
       TPD_G             : time                  := 1 ns;
       CLK_FREQ_G        : real                  := 125.0e6;
@@ -102,7 +102,7 @@ architecture rtl of ModbusRTU is
 	  crcReset  => '0',
 	  uartTxValid => '0',
 	  count     => x"0",
-	  fifoDin   => x"0000",
+	  fifoDin   => x"00",
 	  errorFlag => "000",       -- "000" no error - "001" response timedout
 	  
 	  responseData => (others => '0')
