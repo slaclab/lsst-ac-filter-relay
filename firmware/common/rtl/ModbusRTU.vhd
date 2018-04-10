@@ -44,7 +44,7 @@ entity ModbusRTU is
       clk     : in  sl;
       rst     : in  sl;
       -- Transmit parallel interface
-      wrData  : in  slv(7 downto 0);
+      wrData  : in  slv(47 downto 0);
       wrValid : in  sl;
       wrReady : out sl;
       -- Receive parallel interface
@@ -265,9 +265,9 @@ begin
         
         when RX_PROCESS_RESP_S =>
           if (v.data(55 downto 48) /= v.responseData(55 downto 48)) then --compare sent and rec function code. They should be the same if no error.
-            if(v.responseData(55 downto 52) = 1000) then  --per modbus protocol, this byte should be empty. Error if MSB is 1.
-              v.errorFlag := v.responseData(47 downto 40);         
-                    --error exception code returned in data field. data fields starts from bit 47 down.
+            if(v.responseData(55 downto 52) = 1000) then                 --per modbus protocol, this byte should be empty. Error if MSB is 1.
+              v.errorFlag := v.responseData(47 downto 40);               
+                    --error exception code returned in data field. Data fields starts from bit 47 down.
                     ----------------------------------------------------------------------------------------
                     --Code   Name                 Description
                     --01h    Illiegal function    Function is not supported

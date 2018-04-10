@@ -118,44 +118,13 @@ begin
          -- XADC Ports
          vPIn             => vPIn,              --[int]
          vNIn             => vNIn,              --[int]
-         -- Boot Memory Ports
-         bootCsL          => bootCsL,           --[out]
-         bootMosi         => bootMosi,          --[out]
-         bootMiso         => bootMiso,          --[in]
          -- 1GbE Interface
          ethClkP          => ethClkP,           --[in]
          ethClkN          => ethClkN,           --[in]
-         ethRxP           => ethRxP,            --[in]
-         ethRxN           => ethRxN,            --[in]
-         ethTxP           => ethTxP,            --[out]
-         ethTxN           => ethTxN);           --[out]
-
-   ---------------------------------
-   -- AXI-Lite: Lsst Ac Filter Relay Application
-   ---------------------------------
---   U_App : entity work.LsstAcFilterRelayApp
---      generic map (
---         TPD_G          => TPD_G,
---         AXI_CLK_FREQ_C => SYS_CLK_FREQ_C)
---      port map (
---         -- AXI-Lite Interface
---         axilClk         => axilClk,
---         axilRst         => axilRst,
---         axilReadMaster  => axilReadMasters(1 downto 0),
---         axilReadSlave   => axilReadSlaves(1 downto 0),
---         axilWriteMaster => axilWriteMasters(1 downto 0),
---         axilWriteSlave  => axilWriteSlaves(1 downto 0),
-
---         -- Relay Okay signals
---         relOK => relOK,                --relay Okay signal to 
-
---         -- SN65HVD1780QDRQ1 interface (RS485 transceiver)
---         rec_Data    => rec_Data,
---         rec_En      => rec_En,
---         driver_En   => driver_En,
---         driver_Data => driver_Data
-
---         );
+         ethRxP(0)        => ethRxP,            --[in]
+         ethRxN(0)        => ethRxN,            --[in]
+         ethTxP(0)        => ethTxP,            --[out]
+         ethTxN(0)        => ethTxN);           --[out]
          
       
    ---------------------------
@@ -203,25 +172,6 @@ U_CurrentSenseReg : entity work.CurrentSenseReg
 -----------------------------------------------------------
 -- NON-AXI entity
 -----------------------------------------------------------	
---U_Modbus : entity work.ModbusMaster
---  generic map (
---    TPD_G		=> TPD_G
---  )
-
---  port map (
----- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
---    rec_Data	=> rec_Data,            --[in]
---    rec_En		=> rec_En,              --[out]
---    driver_Data	=> driver_Data,         --[out]
---    driver_En	=> driver_En,           --[out]
-    
----- Mobus Data for TX --    
---    mbDataTx 	=> mbData,              --[in]
-    
----- clk & rst signal --   
---      clk     => axilClk,               --[in]
---      rst     => axilRst                --[in]
---  );
 	
   
 U_ModbusRTU : entity work.ModbusRTU
