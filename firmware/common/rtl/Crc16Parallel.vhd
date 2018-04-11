@@ -148,7 +148,7 @@ begin
 
       -- Transpose each byte in the data out and invert
       -- This inversion is equivalent to an XOR of the CRC register with xFFFFFFFF 
-      for byte in 0 to 3 loop
+      for byte in 0 to 1 loop
          for b in 0 to 7 loop
             crcOut(byte*8+b) <= not(r.crc((byte+1)*8-1-b));
          end loop;

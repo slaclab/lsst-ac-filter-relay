@@ -48,7 +48,7 @@ entity ModbusRTU is
       wrValid : in  sl;
       wrReady : out sl;
       -- Receive parallel interface
-      rdData  : out slv(7 downto 0);
+      rdData  : out slv(63 downto 0);
       rdValid : out sl;
       rdReady : in  sl;
       
@@ -73,13 +73,13 @@ architecture rtl of ModbusRTU is
       
       RX_REC_RESP_S,
       RX_PROCESS_RESP_S,
-      RX_ERROR_S
+      ERROR_S
     );
 
     type RegType is record
 	  wrReady      : sl;
 	  data	       : slv(63 downto 0);
-	  charTime	   : slv(8 downto 0);
+	  charTime	   : slv(11 downto 0);
 	  mbState	   : StateType;
 	  crcValid     : sl;
 	  holdReg      : slv(47 downto 0);
@@ -87,9 +87,13 @@ architecture rtl of ModbusRTU is
 	  uartTxValid  : sl;
 	  count        : slv(3 downto 0);
 	  fifoDin      : slv(7 downto 0);
-	  errorFlag    : slv(2 downto 0);
+	  errorFlag    : slv(7 downto 0);
 	  
       responseData : slv(63 downto 0);
+      
+      txEnable     : sl;   
+      respValid    : sl;      
+
 	end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -103,9 +107,12 @@ architecture rtl of ModbusRTU is
 	  uartTxValid => '0',
 	  count     => x"0",
 	  fifoDin   => x"00",
-	  errorFlag => "000",       -- "000" no error - "001" response timedout
+	  errorFlag => x"00",       -- x"00" no error 
 	  
-	  responseData => (others => '0')
+	  responseData => (others => '0'),
+	  
+	  txEnable  => '0', 
+	  respValid => '0'     
 	  );
 
    signal uartTxData  : slv(7 downto 0);
@@ -138,13 +145,14 @@ architecture rtl of ModbusRTU is
 begin
 
 	
-    comb : process (baud16x, r, rst, wrValid ) is
+    comb : process (baud16x, r, rst, wrValid) is
       variable v : RegType;
     begin
       v := r;
       
       v.crcValid :='0';
       v.crcReset :='0';
+      v.respValid := '0';
       
       case r.mbState is
       
@@ -156,6 +164,7 @@ begin
               v.charTime := TIMEOUT_RESET_G;
             end if;
           end if;
+          v.txEnable := '0';
       
         when TX_IDLE_S =>
           v.wrReady    := '1';
@@ -174,6 +183,7 @@ begin
         --probably wait until crc finish before loading into v.data
           v.data := wrData & crcout(7 downto 0) & crcOut(15 downto 8);  --original data + CRC low + CRC hi per Modbus protocol
           v.mbState  := TX_TRANSMIT_S;
+          v.txEnable := '1';
         
         when TX_TRANSMIT_S =>
           if (fifoTxReady = '1') then
@@ -210,18 +220,22 @@ begin
                 v.fifoDin := r.data(7 downto 0);   -- CRC hi
                 v.count := x"0";
                 v.mbState := RX_REC_RESP_S;
-            
+                
+              when others =>
+                v.mbState := ERROR_S;
+                v.errorFlag := x"fd";        
             end case;
           end if;
               
             
         when RX_REC_RESP_S =>
+          v.txEnable := '0';
           if (baud16x = '1') then
             v.charTime   := r.charTime + 1;
             if (r.charTime = RESP_TIMEOUT_G) then    --response timed out
-              v.mbState  := RX_ERROR_S;
+              v.mbState  := ERROR_S;
               v.charTime := TIMEOUT_RESET_G;  
-              v.errorFlag := "001";                  --set flag here for response timed-out error
+              v.errorFlag := x"ff";                  --set flag here for response timed-out error
             end if;
           end if;
           
@@ -260,6 +274,11 @@ begin
               v.responseData(7 downto 0) := x"00";                 --nothing for now
               v.count := x"0";
               v.mbState := RX_PROCESS_RESP_S;
+              
+            when others =>
+              v.mbState := ERROR_S;
+              v.errorFlag := x"fe";     
+              
             end case;
           end if;
         
@@ -270,17 +289,25 @@ begin
                     --error exception code returned in data field. Data fields starts from bit 47 down.
                     ----------------------------------------------------------------------------------------
                     --Code   Name                 Description
-                    --01h    Illiegal function    Function is not supported
+                    --01h    Illegal function    Function is not supported
                     --02h    Illegal data addr    Reg addr is out of range / trying to read write only reg
                     --03h    Illegal data value   Value is out of range
                     --04h    Slave device fault   Unrecoverable error, e.g. time-out
                     --06h    Slave device busy    Unit busy. Requested action not possible
+                    
+                    --ff     Rx Timed-Out         Timed-out waiting for response from slave
+                    --fe     Rx Fifo error        Rx Fifo not reading from valid data
+                    --fd     Tx Fifo error        Tx Fifo not writing from valid data
                     ------------------------------------------------------------------------------------------
-              v.mbState := RX_ERROR_S;
+              v.mbState := ERROR_S;
             end if;
+          else
+            v.mbState := TX_INIT_S;
           end if;
+            v.respValid := '1';
+            
        
-        when RX_ERROR_S =>
+        when ERROR_S =>
           v.mbState := TX_INIT_S;
           
       end case;
@@ -290,6 +317,10 @@ begin
       end if;
       
       rin  <= v;
+      tx_En <= r.txEnable;     --tx_En is active high
+      rx_En <= r.txEnable;     --rx_En is active low
+      rdValid <= r.respValid;
+      rdData <= r.responseData;
       
     end process comb; 
     
@@ -298,16 +329,10 @@ begin
     begin
       if (rising_edge(clk)) then
         r <= rin after TPD_G;
+        
       end if;
     end process seq; 
     
-
-
-
-
-
-
-
 
 
 
@@ -368,7 +393,7 @@ begin
    -- FIFO to feed UART transmitter
    -------------------------------------------------------------------------------------------------
    wrReady     <= fifoTxReady;
-   fifoTxData  <= wrData;
+   --fifoTxData  <= wrData;
    fifoTxValid <= wrValid and fifoTxReady;
    uartTxRdEn  <= uartTxReady and uartTxValid;
    U_Fifo_Tx : entity work.Fifo
@@ -384,7 +409,7 @@ begin
          rst      => rst,               -- [in]
          wr_clk   => clk,               -- [in]
          wr_en    => fifoTxValid,       -- [in]
-         din      => fifoTxData,        -- [in]
+         din      => r.fifoDin,        -- [in]
          not_full => fifoTxReady,       -- [out]
          rd_clk   => clk,               -- [in]
          rd_en    => uartTxRdEn,        -- [in]
@@ -412,8 +437,6 @@ begin
    fifoRxRdEn     <= fifoRxReady and fifoRxValid;
    uartRxValidInt <= uartRxValid and uartRxReady;
 
-   rdData      <= fifoRxData; --this needs to change 
-   rdValid     <= fifoRxValid;
    fifoRxReady <= rdReady;
 
    U_Fifo_Rx : entity work.Fifo

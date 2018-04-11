@@ -46,7 +46,7 @@ entity LsstAcFilterRelay is
       relOK : out slv(11 downto 0) := x"000";  --
       
       -- Modbus signals --
-      mbDataTx : out slv(47 downto 0);
+     -- mbDataTx : out slv(47 downto 0);
 
       -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
       rec_Data    : in sl;              --
@@ -87,11 +87,8 @@ architecture top_level of LsstAcFilterRelay is
    
    
    signal mbData         : slv(47 downto 0);
-   
-   signal temp1 : sl; --remove
-   signal temp2 : sl;--remove
-   signal temp3 : sl;--remove
-   signal temp4 : slv(7 downto 0);
+   signal responseData   : slv(63 downto 0);
+   signal responseValid  : sl;
 
 begin
 
@@ -164,8 +161,10 @@ U_CurrentSenseReg : entity work.CurrentSenseReg
     axilWriteMaster => axilWriteMasters(1), --[in]
     axilWriteSlave  => axilWriteSlaves(1),  --[out]
 
-     -- Relay Control    
-     mbDataTx => mbData                     --[out]
+     -- Modbust --    
+     mbDataTx => mbData,                    --[out]
+     mbDataRx => responseData ,             --[in]
+     responseValid => responseValid         --[in]
      );     
       
 
@@ -190,8 +189,10 @@ U_ModbusRTU : entity work.ModbusRTU
 -- Mobus Data --    
            wrData     => mbData,          --[in]
            wrValid    => '1',             --[in]    --- still need to work on this
-          
-           rdReady    => '1'              --[in]    --- still need to work on this
+           rdReady    => '1',             --[in]    --- still need to work on this
+           
+           rdData  =>  responseData,      --[out]
+           rdValid =>  responseValid      --[out]
            );
 
          

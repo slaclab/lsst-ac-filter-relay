@@ -48,12 +48,21 @@ Port (
     axilWriteSlave  : out AxiLiteWriteSlaveType;
 
 -- ModbusCtrl
-	mbDataTx		  : out slv(47 downto 0)
+	mbDataTx		  : out slv(47 downto 0);
 			--mbid          : out slv(7 downto 0);
 			--functionCode  : out slv(7 downto 0);
 			--sensorAddress : out slv(15 downto 0);
 			--wrdata		: out slv(15 downto 0);
 			--CRC		    : out slv(15 downto 0);
+    
+    mbDataRx        : in slv(63 downto 0);
+            --mbid           : in slv(7 downto 0);
+            --functionCode   : in slv(7 downto 0);
+            --number of byte : in slv(7 downto 0);
+            --rddata         : in slv(15 downto 0);
+            --CRC            : in slv(15 downto 0);
+            --x"00"          : in slv(7 downto 0);
+    responseValid   : in sl
     );
 end CurrentSenseReg;
 
@@ -61,12 +70,14 @@ architecture Behavioral of CurrentSenseReg is
 
     type RegType is record
       mobusDataTx             :  slv(47 downto 0);
+      respData                :  slv(63 downto 0);
       axilReadSlave     :  AxiLiteReadSlaveType;
       axilWriteSlave    :  AxiLiteWriteSlaveType;
     end record;   
       
     constant REG_INIT_C : RegType := (
       mobusDataTx      => x"00_00_0000_0000",
+      respData       => x"00_00_00_00_00_00_00_00",
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C
       ); 
@@ -99,10 +110,15 @@ begin
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
       
       axiSlaveRegister(axilEp, X"00", 0, v.mobusDataTx);  -- Register 0 -- 12 on/off bit in 11-0  
+      axiSlaveRegister(axilEp, X"04", 0, v.respData);  -- Register 0 -- 12 on/off bit in 11-0 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);   
       
       if (axilRst = '1') then 
         v := REG_INIT_C;
+      end if;
+      
+      if(responseValid = '1') then
+        v.respData := mbDataRx;
       end if;
       
       rin <= v;
