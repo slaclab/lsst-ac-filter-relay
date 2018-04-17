@@ -86,9 +86,10 @@ architecture top_level of LsstAcFilterRelay is
    signal axilReadSlaves   : AxiLiteReadSlaveArray(6 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
    
    
-   signal mbData         : slv(47 downto 0);
-   signal responseData   : slv(63 downto 0);
-   signal responseValid  : sl;
+   signal mbDataTx           : slv(47 downto 0);
+   signal responseData     : slv(63 downto 0);
+   signal responseValid    : sl;
+   signal transmitValid    : sl;
 
 begin
 
@@ -107,14 +108,14 @@ begin
          axilClk          => axilClk,           --[out]
          axilRst          => axilRst,           --[out]
          axilReadMasters  => axilReadMasters,   --[out]
-         axilReadSlaves   => axilReadSlaves,    --[int]
+         axilReadSlaves   => axilReadSlaves,    --[in]
          axilWriteMasters => axilWriteMasters,  --[out]
-         axilWriteSlaves  => axilWriteSlaves,   --[int]
+         axilWriteSlaves  => axilWriteSlaves,   --[in]
          -- Misc.
-         extRstL          => '1',               --[int]
+         extRstL          => '1',               --[in]
          -- XADC Ports
-         vPIn             => vPIn,              --[int]
-         vNIn             => vNIn,              --[int]
+         vPIn             => vPIn,              --[in]
+         vNIn             => vNIn,              --[in]
          -- 1GbE Interface
          ethClkP          => ethClkP,           --[in]
          ethClkN          => ethClkN,           --[in]
@@ -141,8 +142,8 @@ U_RelayReg : entity work.RelayReg
      axilWriteSlave  => axilWriteSlaves(0),   --[out]
 
 -- Relay Control    
-      relOK => relOK                          --[out]
-      );
+     relOK => relOK                           --[out]
+     );
       
       
   ---------------------------
@@ -162,9 +163,10 @@ U_CurrentSenseReg : entity work.CurrentSenseReg
     axilWriteSlave  => axilWriteSlaves(1),  --[out]
 
      -- Modbust --    
-     mbDataTx => mbData,                    --[out]
+     mbDataTx => mbDataTx,                  --[out]
      mbDataRx => responseData ,             --[in]
-     responseValid => responseValid         --[in]
+     responseValid => responseValid,        --[in]
+     txValid  => transmitValid              --[out]
      );     
       
 
@@ -181,14 +183,15 @@ U_ModbusRTU : entity work.ModbusRTU
            clk     => axilClk,            -- [in]
            rst     => axilRst,            -- [in]
 -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
-           rx      => rec_Data,            --[in]
+           rx      => rec_Data,           --[in]
            rx_En   => rec_En,             --[out]
            tx      => driver_Data,        --[out]
            tx_En   => driver_En,          --[out]
            
 -- Mobus Data --    
-           wrData     => mbData,          --[in]
-           wrValid    => '1',             --[in]    --- still need to work on this
+           wrData     => mbDataTx,        --[in]
+           wrValid    => transmitValid,   --[in]
+           
            rdReady    => '1',             --[in]    --- still need to work on this
            
            rdData  =>  responseData,      --[out]

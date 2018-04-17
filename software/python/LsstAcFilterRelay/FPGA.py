@@ -35,8 +35,14 @@ class Fpga(pr.Device):
         
         # Add User devices
         self.add(CtrlReg(
-            name    = 'Registers',
+            name    = 'Relay Registers',
             offset  = (1*coreStride)+ (appStride * 0),
+            expand  = False,
+        ))
+		
+        self.add(Modbus(
+            name    = 'Modbus Registers',
+            offset  = (0x40000)+ (appStride * 0),
             expand  = False,
         ))
 
@@ -108,4 +114,31 @@ class CtrlReg(pr.Device):
             offset  = 0x2C,
             mode    = 'RW',
         ))
-		
+
+class Modbus(pr.Device):
+    def __init__(self, 
+                 name        = "Modbus",
+                 description = "Modbus Data in and out",
+                 **kwargs):
+        super().__init__(name=name, description=description, **kwargs)
+        
+        self.add(pr.RemoteVariable(
+            name    = 'ModbusTxHi',
+            offset  = 0x0,
+            mode    = 'RW',
+        ))
+        self.add(pr.RemoteVariable(
+            name    = 'ModbusTxLo',
+            offset  = 0x4,
+            mode    = 'RW',
+        ))
+        self.add(pr.RemoteVariable(
+            name    = 'ModbusRxHi',
+            offset  = 0x08,
+            mode    = 'RO',
+        ))
+        self.add(pr.RemoteVariable(
+            name    = 'ModbusRxLo',
+            offset  = 0x0C,
+            mode    = 'RO',
+        ))

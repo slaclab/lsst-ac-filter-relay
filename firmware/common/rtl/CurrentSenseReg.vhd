@@ -48,7 +48,7 @@ Port (
     axilWriteSlave  : out AxiLiteWriteSlaveType;
 
 -- ModbusCtrl
-	mbDataTx		  : out slv(47 downto 0);
+	mbDataTx		: out slv(47 downto 0);
 			--mbid          : out slv(7 downto 0);
 			--functionCode  : out slv(7 downto 0);
 			--sensorAddress : out slv(15 downto 0);
@@ -62,24 +62,33 @@ Port (
             --rddata         : in slv(15 downto 0);
             --CRC            : in slv(15 downto 0);
             --x"00"          : in slv(7 downto 0);
-    responseValid   : in sl
+    responseValid   : in sl;
+    txValid         : out sl
     );
 end CurrentSenseReg;
 
 architecture Behavioral of CurrentSenseReg is
 
     type RegType is record
-      mobusDataTx             :  slv(47 downto 0);
-      respData                :  slv(63 downto 0);
+      modbusTxHi             :  slv(31 downto 0);
+      modbusTxLo             :  slv(31 downto 0);
+      respDataHi            :  slv(31 downto 0);
+      respDataLo            :  slv(31 downto 0);
+      txValid               : sl;
+      
       axilReadSlave     :  AxiLiteReadSlaveType;
       axilWriteSlave    :  AxiLiteWriteSlaveType;
     end record;   
       
     constant REG_INIT_C : RegType := (
-      mobusDataTx      => x"00_00_0000_0000",
-      respData       => x"00_00_00_00_00_00_00_00",
-      axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C
+      modbusTxHi       => x"00_00_00_00",
+      modbusTxLo       => x"00_00_00_00",
+      respDataHi       => x"00_00_00_00",
+      respDataLo       => x"00_00_00_00",
+      txValid          => '0',
+      
+      axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C
       ); 
       
       --Output of register
@@ -101,7 +110,7 @@ begin
    
    
 --start of combinational block---------------------------   
-    comb : process (r, axilRst, axilReadMaster, axilWriteMaster) is
+    comb : process (r, axilRst, axilReadMaster, axilWriteMaster, responseValid) is
       variable v : RegType;
       variable axilEp : AxiLiteEndpointType;
     begin
@@ -109,23 +118,30 @@ begin
       
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
       
-      axiSlaveRegister(axilEp, X"00", 0, v.mobusDataTx);  -- Register 0 -- 12 on/off bit in 11-0  
-      axiSlaveRegister(axilEp, X"04", 0, v.respData);  -- Register 0 -- 12 on/off bit in 11-0 
+      axiSlaveRegister(axilEp, X"00", 0, v.modbusTxHi);  -- 4 high byte of modbus 
+      axiSlaveRegister(axilEp, X"04", 0, v.modbusTxLo);  -- 4 low byte of modbus 
+      axiSlaveRegister(axilEp, X"08", 0, v.respDataHi);   
+      axiSlaveRegister(axilEp, X"0C", 0, v.respDataLo);
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);   
       
       if (axilRst = '1') then 
         v := REG_INIT_C;
+      else
+        v.txValid := '1';
       end if;
       
       if(responseValid = '1') then
-        v.respData := mbDataRx;
+        v.respDataHi := mbDataRx(63 downto 32);
+        v.respDataLo := mbDataRx(31 downto 0);
       end if;
       
       rin <= v;
-     
-      mbDataTx  <= r.mobusDataTx;
+      
+      mbDataTx  <= r.modbusTxHi & r.modbusTxLo(31 downto 16); --only the first 2 left-most bytes of the lower 8 bytes are used
       axilWriteSlave  <= r.axilWriteSlave;      
       axilReadSlave  <= r.axilReadSlave;  
+      
+      txValid <= r.txValid;
      
     end process comb;
 --end of combinational block-----------------------------    

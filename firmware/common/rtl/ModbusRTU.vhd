@@ -29,8 +29,8 @@ entity ModbusRTU is
    	 --1 character-time = 8bit
      --3.5 character-time = 28 bit
      --1 bit is 16 rising edge of the baud16x "clock"
-     --therefore it will take 448 baud16x count to = 3.5 character time
-     TIMEOUT_G        : slv(11 downto 0) := x"1C0"; --  d'448=x'1C0
+     --it will take 448 baud16x count to = 3.5 character time
+     TIMEOUT_G        : slv(11 downto 0) := x"1C0"; --  d'448
      TIMEOUT_RESET_G  : slv(11 downto 0) := x"000";
      
      RESP_TIMEOUT_G   : slv(11 downto 0) := x"fff"; --arbitrary time to wait for response before timing out
@@ -54,9 +54,9 @@ entity ModbusRTU is
       
 -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
       rx      : in sl; 
-      rx_En   : out sl; --needs to be not(driver_en)
+      rx_En   : out sl; --needs to be same as tx_En
       tx      : out sl; 
-      tx_En   : out sl --needs to be not(rec_en)
+      tx_En   : out sl  --needs to be same as rx_EN
 
       );
 
@@ -181,9 +181,16 @@ begin
         
         when TX_INTERMEDIATE_S =>         
         --probably wait until crc finish before loading into v.data
-          v.data := wrData & crcout(7 downto 0) & crcOut(15 downto 8);  --original data + CRC low + CRC hi per Modbus protocol
-          v.mbState  := TX_TRANSMIT_S;
-          v.txEnable := '1';
+          if (baud16x = '1') then
+            v.charTime   := r.charTime + 1;
+            if (r.charTime = TIMEOUT_G) then    --arbitrary wait 
+              v.charTime := TIMEOUT_RESET_G;
+              v.data := wrData & crcout(7 downto 0) & crcOut(15 downto 8);  --original data + CRC low + CRC hi per Modbus protocol
+              v.mbState  := TX_TRANSMIT_S;
+              v.txEnable := '1';
+            end if;
+          end if;
+
         
         when TX_TRANSMIT_S =>
           if (fifoTxReady = '1') then
@@ -223,7 +230,8 @@ begin
                 
               when others =>
                 v.mbState := ERROR_S;
-                v.errorFlag := x"fd";        
+                v.errorFlag := x"fd"; 
+                v.count := x"0";       
             end case;
           end if;
               
@@ -277,12 +285,13 @@ begin
               
             when others =>
               v.mbState := ERROR_S;
-              v.errorFlag := x"fe";     
+              v.errorFlag := x"fe"; 
+              v.count := x"0";    
               
             end case;
           end if;
         
-        when RX_PROCESS_RESP_S =>
+        when RX_PROCESS_RESP_S => 
           if (v.data(55 downto 48) /= v.responseData(55 downto 48)) then --compare sent and rec function code. They should be the same if no error.
             if(v.responseData(55 downto 52) = 1000) then                 --per modbus protocol, this byte should be empty. Error if MSB is 1.
               v.errorFlag := v.responseData(47 downto 40);               
@@ -299,16 +308,16 @@ begin
                     --fe     Rx Fifo error        Rx Fifo not reading from valid data
                     --fd     Tx Fifo error        Tx Fifo not writing from valid data
                     ------------------------------------------------------------------------------------------
-              v.mbState := ERROR_S;
             end if;
+            v.mbState := ERROR_S;
           else
+            v.respValid := '1';
             v.mbState := TX_INIT_S;
           end if;
-            v.respValid := '1';
-            
        
-        when ERROR_S =>
+        when ERROR_S =>                 --This needs more work.
           v.mbState := TX_INIT_S;
+          v.respValid := '1';
           
       end case;
     
