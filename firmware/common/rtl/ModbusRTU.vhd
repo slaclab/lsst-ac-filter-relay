@@ -230,7 +230,7 @@ begin
                 
               when others =>
                 v.mbState := ERROR_S;
-                v.errorFlag := x"fd"; 
+                v.errorFlag := x"cc"; 
                 v.count := x"0";       
             end case;
           end if;
@@ -243,7 +243,7 @@ begin
             if (r.charTime = RESP_TIMEOUT_G) then    --response timed out
               v.mbState  := ERROR_S;
               v.charTime := TIMEOUT_RESET_G;  
-              v.errorFlag := x"ff";                  --set flag here for response timed-out error
+              v.errorFlag := x"aa";                  --set flag here for response timed-out error
             end if;
           end if;
           
@@ -285,7 +285,7 @@ begin
               
             when others =>
               v.mbState := ERROR_S;
-              v.errorFlag := x"fe"; 
+              v.errorFlag := x"bb"; 
               v.count := x"0";    
               
             end case;
@@ -304,9 +304,9 @@ begin
                     --04h    Slave device fault   Unrecoverable error, e.g. time-out
                     --06h    Slave device busy    Unit busy. Requested action not possible
                     
-                    --ff     Rx Timed-Out         Timed-out waiting for response from slave
-                    --fe     Rx Fifo error        Rx Fifo not reading from valid data
-                    --fd     Tx Fifo error        Tx Fifo not writing from valid data
+                    --aa     Rx Timed-Out         Timed-out waiting for response from slave
+                    --bb     Rx Fifo error        Rx Fifo not reading from valid data
+                    --cc     Tx Fifo error        Tx Fifo not writing from valid data
                     ------------------------------------------------------------------------------------------
             end if;
             v.mbState := ERROR_S;
@@ -316,6 +316,7 @@ begin
           end if;
        
         when ERROR_S =>                 --This needs more work.
+          v.responseData(47 downto 40) := v.errorFlag;
           v.mbState := TX_INIT_S;
           v.respValid := '1';
           

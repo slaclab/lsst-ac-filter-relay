@@ -113,8 +113,10 @@ begin
     comb : process (r, axilRst, axilReadMaster, axilWriteMaster, responseValid) is
       variable v : RegType;
       variable axilEp : AxiLiteEndpointType;
+      variable axiStatus : AxiLiteStatusType;
     begin
       v := r; --initialize v
+      
       
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
       
@@ -126,7 +128,10 @@ begin
       
       if (axilRst = '1') then 
         v := REG_INIT_C;
-      else
+      end if;
+      
+      --check for write request
+      if (axiStatus.writeEnable = '1') then
         v.txValid := '1';
       end if;
       
