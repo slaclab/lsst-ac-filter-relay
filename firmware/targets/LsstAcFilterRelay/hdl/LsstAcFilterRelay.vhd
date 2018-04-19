@@ -1,20 +1,8 @@
------------------------------------------------------------------
---                                                             --
------------------------------------------------------------------
---
---      LsstAcFilterRelay.vhd -
---
---      Copyright(c) SLAC National Accelerator Laboratory 2000
---
---      Author: 
---      Created on: 
---      Last change: 
---
 -------------------------------------------------------------------------------
 -- File       : LSStACFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-02-28
--- Last update: 2018-03-08
+-- Last update: 2018-04-19
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -38,38 +26,26 @@ use unisim.vcomponents.all;
 
 entity LsstAcFilterRelay is
    generic (
-      TPD_G        : time               := 1 ns;
-      OVERRIDE_ETH_CONFIG_G : boolean   := true;
+      TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
    port (
-      -- Relay Okay signal --
-      relOK : out slv(11 downto 0) := x"000";  --
-      
-      -- Modbus signals --
-     -- mbDataTx : out slv(47 downto 0);
-
-      -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
-      rec_Data    : in sl;              --
-      rec_En      : out sl;             --
-      driver_Data : out sl;              --
-      driver_En   : out sl;             --
-
-      -- Boot Memory Ports
-      bootCsL  : out sl;
-      bootMosi : out sl;
-      bootMiso : in  sl;
-
+      -- Relay Okay signal
+      relOK      : out slv(11 downto 0);
+      -- SN65HVD1780QDRQ1 interface (RS485 transceiver)
+      recData    : in  sl;
+      recEn      : out sl;
+      driverData : out sl;
+      driverEn   : out sl;
       -- 1GbE Ports
-      ethClkP : in  sl;
-      ethClkN : in  sl;
-      ethRxP  : in  sl;
-      ethRxN  : in  sl;
-      ethTxP  : out sl;
-      ethTxN  : out sl;
-      
+      ethClkP    : in  sl;
+      ethClkN    : in  sl;
+      ethRxP     : in  sl;
+      ethRxN     : in  sl;
+      ethTxP     : out sl;
+      ethTxN     : out sl;
       -- XADC Ports
-      vPIn    : in  sl;
-      vNIn    : in  sl);
+      vPIn       : in  sl;
+      vNIn       : in  sl);
 end LsstAcFilterRelay;
 
 architecture top_level of LsstAcFilterRelay is
@@ -82,14 +58,14 @@ architecture top_level of LsstAcFilterRelay is
    signal axilRst          : sl;
    signal axilWriteMasters : AxiLiteWriteMasterArray(6 downto 0);
    signal axilWriteSlaves  : AxiLiteWriteSlaveArray(6 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
-   signal axilReadMasters  : AxiLiteReadMasterArray(6 downto 0) ;
+   signal axilReadMasters  : AxiLiteReadMasterArray(6 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(6 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
-   
-   
-   signal mbDataTx           : slv(47 downto 0);
-   signal responseData     : slv(63 downto 0);
-   signal responseValid    : sl;
-   signal transmitValid    : sl;
+
+   signal mbDataTx      : slv(47 downto 0);
+   signal responseData  : slv(63 downto 0);
+   signal responseValid : sl;
+   signal transmitValid : sl;
+   signal transmitReady : sl;
 
 begin
 
@@ -98,11 +74,8 @@ begin
    ---------------------
    U_Core : entity work.LsstPwrCtrlCore
       generic map (
-         TPD_G                 => TPD_G,
-         OVERRIDE_ETH_CONFIG_G => OVERRIDE_ETH_CONFIG_G,
-         OVERRIDE_MAC_ADDR_G   => x"3f_48_00_56_00_08",  --08:00:56:00:48:3f     --x"00_00_16_56_00_08",  -- 08:00:56:16:00:00     
-         OVERRIDE_IP_ADDR_G    => x"3f_01_A8_C0", --192.168.1.63      --x"0A_01_A8_C0",        -- 192.168.1.10 
-         BUILD_INFO_G          => BUILD_INFO_G)
+         TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G)
       port map (
          -- Register Interface
          axilClk          => axilClk,           --[out]
@@ -123,81 +96,69 @@ begin
          ethRxN(0)        => ethRxN,            --[in]
          ethTxP(0)        => ethTxP,            --[out]
          ethTxN(0)        => ethTxN);           --[out]
-         
-      
+
    ---------------------------
    -- Relay register
    ---------------------------  
-U_RelayReg : entity work.RelayReg
-   generic map(
-      TPD_G => TPD_G
-      )
-   port map (
--- Slave AXI-Lite Interface
-     axilClk         => axilClk,              --[in]
-     axilRst         => axilRst,              --[in]
-     axilReadMaster  => axilReadMasters(0),   --[in]
-     axilReadSlave   => axilReadSlaves(0),    --[out]
-     axilWriteMaster => axilWriteMasters(0),  --[in]
-     axilWriteSlave  => axilWriteSlaves(0),   --[out]
+   U_RelayReg : entity work.RelayReg
+      generic map(
+         TPD_G => TPD_G)
+      port map (
+         -- Slave AXI-Lite Interface
+         axilClk         => axilClk,              --[in]
+         axilRst         => axilRst,              --[in]
+         axilReadMaster  => axilReadMasters(0),   --[in]
+         axilReadSlave   => axilReadSlaves(0),    --[out]
+         axilWriteMaster => axilWriteMasters(0),  --[in]
+         axilWriteSlave  => axilWriteSlaves(0),   --[out]
+         -- Relay Control    
+         relOK           => relOK);               --[out]
 
--- Relay Control    
-     relOK => relOK                           --[out]
-     );
-      
-      
-  ---------------------------
-  -- CurrentSense register
-  ---------------------------  
-U_CurrentSenseReg : entity work.CurrentSenseReg
-  generic map(
-     TPD_G => TPD_G
-     )
-  port map (
-     -- Slave AXI-Lite Interface
-    axilClk         => axilClk,             --[in]
-    axilRst         => axilRst,             --[in]
-    axilReadMaster  => axilReadMasters(1),  --[in]
-    axilReadSlave   => axilReadSlaves(1),   --[out]
-    axilWriteMaster => axilWriteMasters(1), --[in]
-    axilWriteSlave  => axilWriteSlaves(1),  --[out]
+   ---------------------------
+   -- CurrentSense register
+   ---------------------------  
+   U_CurrentSenseReg : entity work.CurrentSenseReg
+      generic map(
+         TPD_G => TPD_G)
+      port map (
+         -- Slave AXI-Lite Interface
+         axilClk         => axilClk,              --[in]
+         axilRst         => axilRst,              --[in]
+         axilReadMaster  => axilReadMasters(1),   --[in]
+         axilReadSlave   => axilReadSlaves(1),    --[out]
+         axilWriteMaster => axilWriteMasters(1),  --[in]
+         axilWriteSlave  => axilWriteSlaves(1),   --[out]
+         -- RX Interface
+         rxValid         => responseValid,        --[in]
+         rxData          => responseData,         --[in]
+         -- TX Interface
+         txValid         => transmitValid,        --[out]
+         txData          => mbDataTx,             --[out]
+         txReady         => transmitReady);       --[in]
 
-     -- Modbust --    
-     mbDataTx => mbDataTx,                  --[out]
-     mbDataRx => responseData ,             --[in]
-     responseValid => responseValid,        --[in]
-     txValid  => transmitValid              --[out]
-     );     
-      
+   -----------------------------------------------------------
+   -- NON-AXI entity
+   ----------------------------------------------------------- 
+   U_ModbusRTU : entity work.ModbusRTU
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk   => axilClk,              -- [in]
+         rst   => axilRst,              -- [in]
+         -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
+         rx    => recData,              --[in]
+         rx_En => recEn,                --[out]
+         tx    => driverData,           --[out]
+         tx_En => driverEn,             --[out]
 
------------------------------------------------------------
--- NON-AXI entity
------------------------------------------------------------	
-	
-  
-U_ModbusRTU : entity work.ModbusRTU
-        generic map (
-           TPD_G             => TPD_G
-           )
-        port map (
-           clk     => axilClk,            -- [in]
-           rst     => axilRst,            -- [in]
--- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
-           rx      => rec_Data,           --[in]
-           rx_En   => rec_En,             --[out]
-           tx      => driver_Data,        --[out]
-           tx_En   => driver_En,          --[out]
-           
--- Mobus Data --    
-           wrData     => mbDataTx,        --[in]
-           wrValid    => transmitValid,   --[in]
-           
-           rdReady    => '1',             --[in]    --- still need to work on this
-           
-           rdData  =>  responseData,      --[out]
-           rdValid =>  responseValid      --[out]
-           );
+         -- Mobus Data --    
+         wrData  => mbDataTx,           --[in]
+         wrValid => transmitValid,      --[in]
+         wrReady => transmitReady,      --[out]
 
-         
+         rdReady => '1',  --[in]    --- still need to work on this
+
+         rdData  => responseData,       --[out]
+         rdValid => responseValid);     --[out]
 
 end top_level;

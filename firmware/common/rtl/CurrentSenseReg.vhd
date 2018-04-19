@@ -14,7 +14,7 @@
 -- File       : CurrentSenseReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-03-14
--- Last update: 2018-03-14
+-- Last update: 2018-04-19
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -28,126 +28,125 @@
 -------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all; 
+use ieee.std_logic_1164.all;
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 
-
 entity CurrentSenseReg is
-generic (
-	TPD_G              : time             := 1 ns);
- 
-Port ( 
-
--- Slave AXI-Lite Interface
-    axilClk         : in  sl;
-    axilRst         : in  sl;
-    axilReadMaster  : in  AxiLiteReadMasterType;
-    axilReadSlave   : out AxiLiteReadSlaveType;
-    axilWriteMaster : in  AxiLiteWriteMasterType;
-    axilWriteSlave  : out AxiLiteWriteSlaveType;
-
--- ModbusCtrl
-	mbDataTx		: out slv(47 downto 0);
-			--mbid          : out slv(7 downto 0);
-			--functionCode  : out slv(7 downto 0);
-			--sensorAddress : out slv(15 downto 0);
-			--wrdata		: out slv(15 downto 0);
-			--CRC		    : out slv(15 downto 0);
-    
-    mbDataRx        : in slv(63 downto 0);
-            --mbid           : in slv(7 downto 0);
-            --functionCode   : in slv(7 downto 0);
-            --number of byte : in slv(7 downto 0);
-            --rddata         : in slv(15 downto 0);
-            --CRC            : in slv(15 downto 0);
-            --x"00"          : in slv(7 downto 0);
-    responseValid   : in sl;
-    txValid         : out sl
-    );
+   generic (
+      TPD_G : time := 1 ns);
+   port (
+      -- Slave AXI-Lite Interface
+      axilClk         : in  sl;
+      axilRst         : in  sl;
+      axilReadMaster  : in  AxiLiteReadMasterType;
+      axilReadSlave   : out AxiLiteReadSlaveType;
+      axilWriteMaster : in  AxiLiteWriteMasterType;
+      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      -- RX Interface
+      rxValid         : in  sl;
+      rxData          : in  slv(63 downto 0);
+      -- TX Interface
+      txValid         : out sl;
+      txData          : out slv(47 downto 0);
+      txReady         : in  sl);
 end CurrentSenseReg;
 
 architecture Behavioral of CurrentSenseReg is
 
-    type RegType is record
-      modbusTxHi             :  slv(31 downto 0);
-      modbusTxLo             :  slv(31 downto 0);
-      respDataHi            :  slv(31 downto 0);
-      respDataLo            :  slv(31 downto 0);
-      txValid               : sl;
-      
-      axilReadSlave     :  AxiLiteReadSlaveType;
-      axilWriteSlave    :  AxiLiteWriteSlaveType;
-    end record;   
-      
-    constant REG_INIT_C : RegType := (
-      modbusTxHi       => x"00_00_00_00",
-      modbusTxLo       => x"00_00_00_00",
-      respDataHi       => x"00_00_00_00",
-      respDataLo       => x"00_00_00_00",
-      txValid          => '0',
-      
-      axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C
-      ); 
-      
-      --Output of register
-      signal r   : RegType := REG_INIT_C;
-      --input of register
-      signal rin : RegType;
-      
-begin    
-   
- 
- --start of sequential block----------------------------
-    seq : process (axilClk) is
-    begin
-      if (rising_edge(axilClk)) then
-          r <= rin;
-      end if;
-    end process seq;
---end of sequential block--------------------------------
-   
-   
---start of combinational block---------------------------   
-    comb : process (r, axilRst, axilReadMaster, axilWriteMaster, responseValid) is
-      variable v : RegType;
-      variable axilEp : AxiLiteEndpointType;
+   type RegType is record
+      modbusTxHi     : slv(31 downto 0);
+      modbusTxLo     : slv(31 downto 0);
+      rxData         : slv(63 downto 0);
+      txValid        : sl;
+      rxValid        : sl;
+      axilReadSlave  : AxiLiteReadSlaveType;
+      axilWriteSlave : AxiLiteWriteSlaveType;
+   end record;
+
+   constant REG_INIT_C : RegType := (
+      modbusTxHi     => x"00_00_00_00",
+      modbusTxLo     => x"00_00_00_00",
+      rxData         => (others => '1'),
+      txValid        => '0',
+      rxValid        => '0',
+      axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C);
+
+   signal r   : RegType := REG_INIT_C;
+   signal rin : RegType;
+
+begin
+
+   comb : process (axilReadMaster, axilRst, axilWriteMaster, r, rxData,
+                   rxValid, txReady) is
+      variable v         : RegType;
+      variable axilEp    : AxiLiteEndpointType;
       variable axiStatus : AxiLiteStatusType;
-    begin
-      v := r; --initialize v
-      
-      
-      axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
-      
-      axiSlaveRegister(axilEp, X"00", 0, v.modbusTxHi);  -- 4 high byte of modbus 
-      axiSlaveRegister(axilEp, X"04", 0, v.modbusTxLo);  -- 4 low byte of modbus 
-      axiSlaveRegister(axilEp, X"08", 0, v.respDataHi);   
-      axiSlaveRegister(axilEp, X"0C", 0, v.respDataLo);
-      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);   
-      
-      if (axilRst = '1') then 
-        v := REG_INIT_C;
+   begin
+      -- Latch the current value
+      v := r;
+
+      -- Reset the strobe
+      v.txValid := '0';
+
+      -- Check for valid
+      if (rxValid = '1') then
+         -- Sample the bus
+         v.rxData  := rxData;
+         -- Set the flag
+         v.rxValid := '1';
       end if;
-      
-      --check for write request
-      if (axiStatus.writeEnable = '1') then
-        v.txValid := '1';
+
+      -- Check if ready for data
+      if (txReady = '1') then
+
+         -- Determine the AXI-Lite transaction
+         axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
+
+         -- Map the register space
+         axiSlaveRegister(axilEp, X"00", 0, v.modbusTxHi);  -- 4 high byte of modbus 
+         axiSlaveRegister(axilEp, X"04", 0, v.modbusTxLo);  -- 4 low byte of modbus 
+         axiWrDetect(axilEp, x"04", v.txValid);
+
+         axiSlaveRegisterR(axilEp, X"08", 0, r.rxData(63 downto 32));
+         axiSlaveRegisterR(axilEp, X"0C", 0, r.rxData(31 downto 0));
+         axiSlaveRegisterR(axilEp, X"10", 0, r.rxValid);
+
+         -- Close out the AXI-Lite transaction
+         axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);
+
       end if;
-      
-      if(responseValid = '1') then
-        v.respDataHi := mbDataRx(63 downto 32);
-        v.respDataLo := mbDataRx(31 downto 0);
+
+      -- Check for write transaction
+      if (r.txValid = '1') then
+         -- Reset set the bus
+         v.rxData  := (others => '1');
+         -- Reset the flag
+         v.rxValid := '0';
       end if;
-      
+
+      -- Reset
+      if (axilRst = '1') then
+         v := REG_INIT_C;
+      end if;
+
+      -- Register the variable for next clock cycle
       rin <= v;
-      
-      mbDataTx  <= r.modbusTxHi & r.modbusTxLo(31 downto 16); --only the first 2 left-most bytes of the lower 8 bytes are used
-      axilWriteSlave  <= r.axilWriteSlave;      
-      axilReadSlave  <= r.axilReadSlave;  
-      
-      txValid <= r.txValid;
-     
-    end process comb;
---end of combinational block-----------------------------    
+
+      -- Registered Outputs       
+      axilWriteSlave <= r.axilWriteSlave;
+      axilReadSlave  <= r.axilReadSlave;
+      txValid        <= r.txValid;
+      txData         <= r.modbusTxHi & r.modbusTxLo(31 downto 16);  --only the first 2 left-most bytes of the lower 8 bytes are used
+
+   end process comb;
+
+   seq : process (axilClk) is
+   begin
+      if (rising_edge(axilClk)) then
+         r <= rin;
+      end if;
+   end process seq;
+
 end architecture Behavioral;
