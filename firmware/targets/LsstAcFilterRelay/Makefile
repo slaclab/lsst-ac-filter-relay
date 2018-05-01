@@ -1,4 +1,5 @@
 #export GIT_BYPASS = 0
+export OVERRIDE_SUBMODULE_LOCKS = 1
 ##########################################################################################
 # Applications must define the 32-bitFirmware Version Number
 ##########################################################################################

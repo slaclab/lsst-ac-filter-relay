@@ -2,7 +2,7 @@
 -- File       : UartAxiLiteMaster.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-06-09
--- Last update: 2018-04-27
+-- Last update: 2018-05-01
 -------------------------------------------------------------------------------
 -- Description: Ties together everything needed for a full duplex UART.
 -- This includes Baud Rate Generator, Transmitter, Receiver and FIFOs.
@@ -32,6 +32,10 @@ entity ModbusRTU is
     --it will take 448 baud16x count to = 3.5 character time
     TIMEOUT_G       : slv(11 downto 0) := x"1C0";  --  d'448
     TIMEOUT_RESET_G : slv(11 downto 0) := x"000";
+
+    PARITY_EN_G  : integer              := 1;
+    PARITY_G     : string               := "NONE";
+    DATA_WIDTH_G : integer range 5 to 8 := 8;
 
     RESP_TIMEOUT_G : slv(11 downto 0) := x"fff";  --arbitrary time to wait for response before timing out
 
@@ -370,7 +374,10 @@ begin
   -------------------------------------------------------------------------------------------------
   U_UartTx_1 : entity work.UartTx
     generic map (
-      TPD_G => TPD_G)
+      TPD_G        => 1 ns,
+      PARITY_EN_G  => PARITY_EN_G,
+      PARITY_G     => PARITY_G,
+      DATA_WIDTH_G => DATA_WIDTH_G)
     port map (
       clk     => clk,                   -- [in]
       rst     => rst,                   -- [in]
@@ -394,7 +401,7 @@ begin
       BRAM_EN_G       => FIFO_BRAM_EN_G,
       FWFT_EN_G       => true,
       PIPE_STAGES_G   => 0,
-      DATA_WIDTH_G    => 8,
+      DATA_WIDTH_G    => DATA_WIDTH_G,
       ADDR_WIDTH_G    => FIFO_ADDR_WIDTH_G)
     port map (
       rst      => rst,                  -- [in]
@@ -413,7 +420,10 @@ begin
   -------------------------------------------------------------------------------------------------
   U_UartRx_1 : entity work.UartRx
     generic map (
-      TPD_G => TPD_G)
+      TPD_G        => 1 ns,
+      PARITY_EN_G  => PARITY_EN_G,
+      PARITY_G     => PARITY_G,
+      DATA_WIDTH_G => DATA_WIDTH_G)
     port map (
       clk     => clk,                   -- [in]
       rst     => rst,                   -- [in]
@@ -438,7 +448,7 @@ begin
       BRAM_EN_G       => FIFO_BRAM_EN_G,
       FWFT_EN_G       => true,
       PIPE_STAGES_G   => 0,
-      DATA_WIDTH_G    => 8,
+      DATA_WIDTH_G    => DATA_WIDTH_G,
       ADDR_WIDTH_G    => FIFO_ADDR_WIDTH_G)
     port map (
       rst      => rst,                  -- [in]
