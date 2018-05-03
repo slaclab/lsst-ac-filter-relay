@@ -30,14 +30,14 @@ entity ModbusRTU is
     --3.5 character-time = 28 bit
     --1 bit is 16 rising edge of the baud16x "clock"
     --it will take 448 baud16x count to = 3.5 character time
-    TIMEOUT_G       : slv(11 downto 0) := x"1C0";  --  d'448
-    TIMEOUT_RESET_G : slv(11 downto 0) := x"000";
+    TIMEOUT_G       : slv(31 downto 0) := x"0000_01C0";  --  d'448
+    TIMEOUT_RESET_G : slv(31 downto 0) := x"0000_0000";
 
     PARITY_EN_G  : integer              := 1;
     PARITY_G     : string               := "NONE";
     DATA_WIDTH_G : integer range 5 to 8 := 8;
 
-    RESP_TIMEOUT_G : slv(11 downto 0) := x"fff";  --arbitrary time to wait for response before timing out
+    RESP_TIMEOUT_G : slv(31 downto 0)   := x"0080_0000";  --arbitrary time to wait for response before timing out
 
     TPD_G             : time                  := 1 ns;
     CLK_FREQ_G        : real                  := 125.0e6;
@@ -75,7 +75,7 @@ architecture rtl of ModbusRTU is
     TX_CALC_CRC_S,
     TX_INTERMEDIATE_S,
     TX_TRANSMIT_S,
-    TX_WAITING_S,
+    TX_DELAY_S,
     TX_WAIT_S,
 
     RX_REC_RESP_S,
@@ -86,7 +86,7 @@ architecture rtl of ModbusRTU is
   type RegType is record
     wrReady     : sl;
     data        : slv(63 downto 0);
-    charTime    : slv(11 downto 0);
+    charTime    : slv(31 downto 0);
     mbState     : StateType;
     crcValid    : sl;
     holdReg     : slv(47 downto 0);
@@ -199,7 +199,7 @@ begin
         v.charTime := r.charTime + 1;
         if (r.charTime = TIMEOUT_G) then  --arbitrary wait 
           v.charTime := TIMEOUT_RESET_G;
-          v.data     := wrData & crcout(7 downto 0) & crcOut(15 downto 8);  --original data + CRC low + CRC hi per Modbus protocol
+          v.data     := wrData & crcout(15 downto 8) & crcOut(7 downto 0);  --original data + CRC low + CRC hi per Modbus protocol
           v.mbState  := TX_TRANSMIT_S;
           v.txEnable := '1';
         end if;
@@ -228,7 +228,7 @@ begin
             when x"7" =>
               v.fifoDin := r.data(7 downto 0);    -- CRC hi
               v.count   := x"0";
-              v.mbState := TX_WAITING_S;
+              v.mbState := TX_DELAY_S;
             when others =>
               v.mbState   := ERROR_S;
               v.errorFlag := x"cc";
@@ -236,7 +236,7 @@ begin
           end case;
         end if;
         
-      when TX_WAITING_S =>
+      when TX_DELAY_S =>
         v.mbState := TX_WAIT_S;
         
       when TX_WAIT_S =>

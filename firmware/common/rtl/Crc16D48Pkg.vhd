@@ -1,23 +1,3 @@
--------------------------------------------------------------------------------
--- File       : Crc16Parallel.vhd
--- Company    : SLAC National Accelerator Laboratory
--- Created    : 2018-03-30
--- Last update: 2018-03-30
--------------------------------------------------------------------------------
--- Description:
---   * polynomial: x^16 + x^15 + x^2 + 1
---   * data width: 48
--------------------------------------------------------------------------------
--- This file is part of 'SLAC Firmware Standard Library'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'SLAC Firmware Standard Library', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
--- the terms contained in the LICENSE.txt file.
--------------------------------------------------------------------------------
-
-
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -53,22 +33,22 @@ package body Crc16D48Pkg is
     d := Data;
     c := crc;
 
-    newcrc(0) := d(47) xor d(46) xor d(45) xor d(43) xor d(41) xor d(40) xor d(39) xor d(38) xor d(37) xor d(36) xor d(35) xor d(34) xor d(33) xor d(32) xor d(31) xor d(30) xor d(27) xor d(26) xor d(25) xor d(24) xor d(23) xor d(22) xor d(21) xor d(20) xor d(19) xor d(18) xor d(17) xor d(16) xor d(15) xor d(13) xor d(12) xor d(11) xor d(10) xor d(9) xor d(8) xor d(7) xor d(6) xor d(5) xor d(4) xor d(3) xor d(2) xor d(1) xor d(0) xor c(0) xor c(1) xor c(2) xor c(3) xor c(4) xor c(5) xor c(6) xor c(7) xor c(8) xor c(9) xor c(11) xor c(13) xor c(14) xor c(15);
-    newcrc(1) := d(47) xor d(46) xor d(44) xor d(42) xor d(41) xor d(40) xor d(39) xor d(38) xor d(37) xor d(36) xor d(35) xor d(34) xor d(33) xor d(32) xor d(31) xor d(28) xor d(27) xor d(26) xor d(25) xor d(24) xor d(23) xor d(22) xor d(21) xor d(20) xor d(19) xor d(18) xor d(17) xor d(16) xor d(14) xor d(13) xor d(12) xor d(11) xor d(10) xor d(9) xor d(8) xor d(7) xor d(6) xor d(5) xor d(4) xor d(3) xor d(2) xor d(1) xor c(0) xor c(1) xor c(2) xor c(3) xor c(4) xor c(5) xor c(6) xor c(7) xor c(8) xor c(9) xor c(10) xor c(12) xor c(14) xor c(15);
-    newcrc(2) := d(46) xor d(42) xor d(31) xor d(30) xor d(29) xor d(28) xor d(16) xor d(14) xor d(1) xor d(0) xor c(10) xor c(14);
-    newcrc(3) := d(47) xor d(43) xor d(32) xor d(31) xor d(30) xor d(29) xor d(17) xor d(15) xor d(2) xor d(1) xor c(0) xor c(11) xor c(15);
-    newcrc(4) := d(44) xor d(33) xor d(32) xor d(31) xor d(30) xor d(18) xor d(16) xor d(3) xor d(2) xor c(0) xor c(1) xor c(12);
-    newcrc(5) := d(45) xor d(34) xor d(33) xor d(32) xor d(31) xor d(19) xor d(17) xor d(4) xor d(3) xor c(0) xor c(1) xor c(2) xor c(13);
-    newcrc(6) := d(46) xor d(35) xor d(34) xor d(33) xor d(32) xor d(20) xor d(18) xor d(5) xor d(4) xor c(0) xor c(1) xor c(2) xor c(3) xor c(14);
-    newcrc(7) := d(47) xor d(36) xor d(35) xor d(34) xor d(33) xor d(21) xor d(19) xor d(6) xor d(5) xor c(1) xor c(2) xor c(3) xor c(4) xor c(15);
-    newcrc(8) := d(37) xor d(36) xor d(35) xor d(34) xor d(22) xor d(20) xor d(7) xor d(6) xor c(2) xor c(3) xor c(4) xor c(5);
-    newcrc(9) := d(38) xor d(37) xor d(36) xor d(35) xor d(23) xor d(21) xor d(8) xor d(7) xor c(3) xor c(4) xor c(5) xor c(6);
-    newcrc(10) := d(39) xor d(38) xor d(37) xor d(36) xor d(24) xor d(22) xor d(9) xor d(8) xor c(4) xor c(5) xor c(6) xor c(7);
-    newcrc(11) := d(40) xor d(39) xor d(38) xor d(37) xor d(25) xor d(23) xor d(10) xor d(9) xor c(5) xor c(6) xor c(7) xor c(8);
-    newcrc(12) := d(41) xor d(40) xor d(39) xor d(38) xor d(26) xor d(24) xor d(11) xor d(10) xor c(6) xor c(7) xor c(8) xor c(9);
-    newcrc(13) := d(42) xor d(41) xor d(40) xor d(39) xor d(27) xor d(25) xor d(12) xor d(11) xor c(7) xor c(8) xor c(9) xor c(10);
-    newcrc(14) := d(43) xor d(42) xor d(41) xor d(40) xor d(28) xor d(26) xor d(13) xor d(12) xor c(8) xor c(9) xor c(10) xor c(11);
-    newcrc(15) := d(47) xor d(46) xor d(45) xor d(44) xor d(42) xor d(40) xor d(39) xor d(38) xor d(37) xor d(36) xor d(35) xor d(34) xor d(33) xor d(32) xor d(31) xor d(30) xor d(29) xor d(26) xor d(25) xor d(24) xor d(23) xor d(22) xor d(21) xor d(20) xor d(19) xor d(18) xor d(17) xor d(16) xor d(15) xor d(14) xor d(12) xor d(11) xor d(10) xor d(9) xor d(8) xor d(7) xor d(6) xor d(5) xor d(4) xor d(3) xor d(2) xor d(1) xor d(0) xor c(0) xor c(1) xor c(2) xor c(3) xor c(4) xor c(5) xor c(6) xor c(7) xor c(8) xor c(10) xor c(12) xor c(13) xor c(14) xor c(15);
+    newcrc(0) := '1' xor d(47) xor d(46) xor d(45) xor d(43) xor d(41) xor d(40) xor d(39) xor d(38) xor d(37) xor d(36) xor d(35) xor d(34) xor d(33) xor d(32) xor d(31) xor d(30) xor d(27) xor d(26) xor d(25) xor d(24) xor d(23) xor d(22) xor d(21) xor d(20) xor d(19) xor d(18) xor d(17) xor d(16) xor d(15) xor d(13) xor d(12) xor d(11) xor d(10) xor d(9) xor d(8) xor d(7) xor d(6) xor d(5) xor d(4) xor d(3) xor d(2) xor d(1) xor d(0) xor c(0) xor c(1) xor c(2) xor c(3) xor c(4) xor c(5) xor c(6) xor c(7) xor c(8) xor c(9) xor c(11) xor c(13) xor c(14) xor c(15);
+    newcrc(1) := '1' xor d(47) xor d(46) xor d(44) xor d(42) xor d(41) xor d(40) xor d(39) xor d(38) xor d(37) xor d(36) xor d(35) xor d(34) xor d(33) xor d(32) xor d(31) xor d(28) xor d(27) xor d(26) xor d(25) xor d(24) xor d(23) xor d(22) xor d(21) xor d(20) xor d(19) xor d(18) xor d(17) xor d(16) xor d(14) xor d(13) xor d(12) xor d(11) xor d(10) xor d(9) xor d(8) xor d(7) xor d(6) xor d(5) xor d(4) xor d(3) xor d(2) xor d(1) xor c(0) xor c(1) xor c(2) xor c(3) xor c(4) xor c(5) xor c(6) xor c(7) xor c(8) xor c(9) xor c(10) xor c(12) xor c(14) xor c(15);
+    newcrc(2) := '1' xor d(46) xor d(42) xor d(31) xor d(30) xor d(29) xor d(28) xor d(16) xor d(14) xor d(1) xor d(0) xor c(10) xor c(14);
+    newcrc(3) := '1' xor d(47) xor d(43) xor d(32) xor d(31) xor d(30) xor d(29) xor d(17) xor d(15) xor d(2) xor d(1) xor c(0) xor c(11) xor c(15);
+    newcrc(4) := '1' xor d(44) xor d(33) xor d(32) xor d(31) xor d(30) xor d(18) xor d(16) xor d(3) xor d(2) xor c(0) xor c(1) xor c(12);
+    newcrc(5) := '1' xor d(45) xor d(34) xor d(33) xor d(32) xor d(31) xor d(19) xor d(17) xor d(4) xor d(3) xor c(0) xor c(1) xor c(2) xor c(13);
+    newcrc(6) := '1' xor d(46) xor d(35) xor d(34) xor d(33) xor d(32) xor d(20) xor d(18) xor d(5) xor d(4) xor c(0) xor c(1) xor c(2) xor c(3) xor c(14);
+    newcrc(7) := '1' xor d(47) xor d(36) xor d(35) xor d(34) xor d(33) xor d(21) xor d(19) xor d(6) xor d(5) xor c(1) xor c(2) xor c(3) xor c(4) xor c(15);
+    newcrc(8) := '1' xor d(37) xor d(36) xor d(35) xor d(34) xor d(22) xor d(20) xor d(7) xor d(6) xor c(2) xor c(3) xor c(4) xor c(5);
+    newcrc(9) := '1' xor d(38) xor d(37) xor d(36) xor d(35) xor d(23) xor d(21) xor d(8) xor d(7) xor c(3) xor c(4) xor c(5) xor c(6);
+    newcrc(10) := '1' xor d(39) xor d(38) xor d(37) xor d(36) xor d(24) xor d(22) xor d(9) xor d(8) xor c(4) xor c(5) xor c(6) xor c(7);
+    newcrc(11) := '1' xor d(40) xor d(39) xor d(38) xor d(37) xor d(25) xor d(23) xor d(10) xor d(9) xor c(5) xor c(6) xor c(7) xor c(8);
+    newcrc(12) := '1' xor d(41) xor d(40) xor d(39) xor d(38) xor d(26) xor d(24) xor d(11) xor d(10) xor c(6) xor c(7) xor c(8) xor c(9);
+    newcrc(13) := '1' xor d(42) xor d(41) xor d(40) xor d(39) xor d(27) xor d(25) xor d(12) xor d(11) xor c(7) xor c(8) xor c(9) xor c(10);
+    newcrc(14) := '1' xor d(43) xor d(42) xor d(41) xor d(40) xor d(28) xor d(26) xor d(13) xor d(12) xor c(8) xor c(9) xor c(10) xor c(11);
+    newcrc(15) := '1' xor d(47) xor d(46) xor d(45) xor d(44) xor d(42) xor d(40) xor d(39) xor d(38) xor d(37) xor d(36) xor d(35) xor d(34) xor d(33) xor d(32) xor d(31) xor d(30) xor d(29) xor d(26) xor d(25) xor d(24) xor d(23) xor d(22) xor d(21) xor d(20) xor d(19) xor d(18) xor d(17) xor d(16) xor d(15) xor d(14) xor d(12) xor d(11) xor d(10) xor d(9) xor d(8) xor d(7) xor d(6) xor d(5) xor d(4) xor d(3) xor d(2) xor d(1) xor d(0) xor c(0) xor c(1) xor c(2) xor c(3) xor c(4) xor c(5) xor c(6) xor c(7) xor c(8) xor c(10) xor c(12) xor c(13) xor c(14) xor c(15);
     return newcrc;
   end crc16Parallel6Byte;
 

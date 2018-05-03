@@ -76,7 +76,7 @@ begin
   begin
     wait for 200 us;
     wrValid <= '1';
-    wrData  <= x"ffff_ffff_ffff";
+    wrData  <= x"0103_0001_0001";
 	wait for 2 ms;
     wrValid <= '0';
     wait;
@@ -84,7 +84,7 @@ begin
   
   RxData_process : process
   begin
-    wait for 1300 us;
+    wait for 3 ms;
 	--1
     rx  <= '1';
 	wait for 9240 ns;
@@ -92,7 +92,7 @@ begin
 	wait for 9240 ns;
 	rx  <= '1';
 	wait for 9240 ns;
-	rx  <= '0';
+	rx  <= '1';
 	--2
 	wait for 9240 ns;
 	rx  <= '1';
