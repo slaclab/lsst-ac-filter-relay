@@ -2,7 +2,7 @@
 -- File       : LSStACFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-02-28
--- Last update: 2018-04-26
+-- Last update: 2018-05-04
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -46,8 +46,8 @@ entity LsstAcFilterRelay is
     -- XADC Ports
     vPIn       : in  sl;
     vNIn       : in  sl;
-	--Reset Chip
-	mReset     : in  sl);
+    --Reset Chip
+    mReset     : in  sl);
 end LsstAcFilterRelay;
 
 architecture top_level of LsstAcFilterRelay is
@@ -136,7 +136,7 @@ begin
       rxData          => responseData,         --[in]
       -- TX Interface
       txValid         => transmitValid,        --[out]
-      wrNotValid      => wrNotValid,           --[out]
+      ------wrNotValid      => wrNotValid,           --[out]
       txData          => mbDataTx,             --[out]
       txReady         => transmitReady);       --[in]
 
@@ -158,37 +158,12 @@ begin
       -- Mobus Data --    
       wrData     => mbDataTx,           --[in]
       wrValid    => transmitValid,      --[in]
-      wrNotValid => wrNotValid,
+      -----wrNotValid => wrNotValid,
       wrReady    => transmitReady,      --[out]
 
       rdReady => '1',  --[in]    --- still need to work on this
 
       rdData  => responseData,          --[out]
       rdValid => responseValid);        --[out]
-	  
-
-	  
-  -- U_ModbusRTU2 : entity work.ModbusRTU2
-    -- generic map (
-      -- TPD_G => TPD_G)
-    -- port map (
-      -- clk   => axilClk,                 -- [in]
-      -- rst   => axilRst,                 -- [in]
-      -- -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
-      -- rx    => recData,                 --[in]
-      -- rx_En => recEn,                   --[out]
-      -- tx    => driverData,              --[out]
-      -- tx_En => driverEn,                --[out]
-
-      -- -- Mobus Data --    
-      -- wrData     => mbDataTx,           --[in]
-      -- wrValid    => transmitValid,      --[in]
-      -- wrNotValid => wrNotValid,
-      -- wrReady    => transmitReady,      --[out]
-
-      -- rdReady => '1',  --[in]    --- still need to work on this
-
-      -- rdData  => responseData,          --[out]
-      -- rdValid => responseValid);        --[out]
 
 end top_level;

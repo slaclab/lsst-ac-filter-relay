@@ -2,7 +2,7 @@
 -- File       : UartAxiLiteMaster.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-06-09
--- Last update: 2018-05-01
+-- Last update: 2018-05-04
 -------------------------------------------------------------------------------
 -- Description: Ties together everything needed for a full duplex UART.
 -- This includes Baud Rate Generator, Transmitter, Receiver and FIFOs.
@@ -37,7 +37,7 @@ entity ModbusRTU is
     PARITY_G     : string               := "NONE";
     DATA_WIDTH_G : integer range 5 to 8 := 8;
 
-    RESP_TIMEOUT_G : slv(31 downto 0)   := x"0080_0000";  --arbitrary time to wait for response before timing out
+    RESP_TIMEOUT_G : slv(31 downto 0) := x"0040_0000";  --arbitrary time to wait for response before timing out
 
     TPD_G             : time                  := 1 ns;
     CLK_FREQ_G        : real                  := 125.0e6;
@@ -50,7 +50,7 @@ entity ModbusRTU is
     -- Transmit parallel interface
     wrData     : in  slv(47 downto 0);
     wrValid    : in  sl;
-    wrNotValid : out sl;
+    --wrNotValid : out sl;
     wrReady    : out sl;
     -- Receive parallel interface
     rdData     : out slv(63 downto 0);
@@ -93,7 +93,7 @@ architecture rtl of ModbusRTU is
     crcReset    : sl;
     uartTxValid : sl;                   -------------------
     fifoTxValid : sl;
-    wrNotValid  : sl;
+    --wrNotValid  : sl;
     count       : slv(3 downto 0);
     fifoDin     : slv(7 downto 0);
     errorFlag   : slv(7 downto 0);
@@ -115,7 +115,7 @@ architecture rtl of ModbusRTU is
     crcReset    => '0',
     uartTxValid => '0',                 ----------
     fifoTxValid => '0',
-    wrNotValid  => '0',
+    --wrNotValid  => '0',
     count       => x"0",
     fifoDin     => x"00",
     errorFlag   => x"00",               -- x"00" no error 
@@ -156,7 +156,7 @@ begin
 
 
   comb : process (baud16x, crcout, fifoRxData, fifoRxValid, fifoTxReady, r,
-                  rst, wrData, wrValid, uartTxReady) is
+                  rst, wrData, wrValid, uartTxReady, fifoTxEmpty) is
     variable v : RegType;
   begin
     v := r;
@@ -164,7 +164,7 @@ begin
     v.crcValid    := '0';
     v.crcReset    := '0';
     v.respValid   := '0';
-    v.wrNotValid  := '0';
+    --v.wrNotValid  := '0';
     v.fifoTxValid := '0';
 
     case r.mbState is
@@ -182,16 +182,16 @@ begin
       when TX_IDLE_S =>
         v.wrReady := '1';
         if (wrValid = '1' and r.wrReady = '1') then
-          v.wrReady  := '0';
-          v.crcReset := '1';  --reset crc before sending in the next data
-          v.mbState  := TX_CALC_CRC_S;
+          v.wrReady    := '0';
+          --v.wrNotValid := '1';
+          v.crcReset   := '1';  --reset crc before sending in the next data
+          v.mbState    := TX_CALC_CRC_S;
         end if;
 
       when TX_CALC_CRC_S =>
-        v.holdReg    := wrData;         --CRC data in
-        v.crcValid   := '1';
-        v.wrNotValid := '1';
-        v.mbState    := TX_INTERMEDIATE_S;
+        v.holdReg  := wrData;           --CRC data in
+        v.crcValid := '1';
+        v.mbState  := TX_INTERMEDIATE_S;
 
       when TX_INTERMEDIATE_S =>
         --probably wait until crc finish before loading into v.data
@@ -250,7 +250,7 @@ begin
         if (baud16x = '1') then
           v.charTime := r.charTime + 1;
           if (r.charTime = RESP_TIMEOUT_G) then  --response timed out
-            v.mbState   := ERROR_S;
+            v.mbState   := RX_PROCESS_RESP_S;--ERROR_S;
             v.charTime  := TIMEOUT_RESET_G;
             v.errorFlag := x"aa";  --set flag here for response timed-out error
           end if;
@@ -286,28 +286,28 @@ begin
         end if;
 
       when RX_PROCESS_RESP_S =>
-        if (v.data(55 downto 48) /= v.responseData(55 downto 48)) then  --compare sent and rec function code. They should be the same if no error.
-          if(v.responseData(55 downto 52) = 1000) then  --per modbus protocol, this byte should be empty. Error if MSB is 1.
-            v.errorFlag := v.responseData(47 downto 40);
-            --error exception code returned in data field. Data fields starts from bit 47 down.
-            ----------------------------------------------------------------------------------------
-            --Code   Name                 Description
-            --01h    Illegal function    Function is not supported
-            --02h    Illegal data addr    Reg addr is out of range / trying to read write only reg
-            --03h    Illegal data value   Value is out of range
-            --04h    Slave device fault   Unrecoverable error, e.g. time-out
-            --06h    Slave device busy    Unit busy. Requested action not possible
+        -- if (v.data(55 downto 48) /= v.responseData(55 downto 48)) then  --compare sent and rec function code. They should be the same if no error.
+          -- if(v.responseData(55 downto 52) = 1000) then  --per modbus protocol, this byte should be empty. Error if MSB is 1.
+            -- v.errorFlag := v.responseData(47 downto 40);
+            -- --error exception code returned in data field. Data fields starts from bit 47 down.
+            -- ----------------------------------------------------------------------------------------
+            -- --Code   Name                 Description
+            -- --01h    Illegal function    Function is not supported
+            -- --02h    Illegal data addr    Reg addr is out of range / trying to read write only reg
+            -- --03h    Illegal data value   Value is out of range
+            -- --04h    Slave device fault   Unrecoverable error, e.g. time-out
+            -- --06h    Slave device busy    Unit busy. Requested action not possible
 
-            --aa     Rx Timed-Out         Timed-out waiting for response from slave
-            --bb     Rx Fifo error        Rx Fifo not reading from valid data
-            --cc     Tx Fifo error        Tx Fifo not writing from valid data
-            ------------------------------------------------------------------------------------------
-          end if;
-          v.mbState := ERROR_S;
-        else
+            -- --aa     Rx Timed-Out         Timed-out waiting for response from slave
+            -- --bb     Rx Fifo error        Rx Fifo not reading from valid data
+            -- --cc     Tx Fifo error        Tx Fifo not writing from valid data
+            -- ------------------------------------------------------------------------------------------
+          -- end if;
+          -- v.mbState := ERROR_S;
+        -- else
           v.respValid := '1';
           v.mbState   := TX_INIT_S;
-        end if;
+        --end if;
 
       when ERROR_S =>                   --This needs more work.
         v.responseData(47 downto 40) := r.errorFlag;
@@ -325,7 +325,7 @@ begin
     rx_En      <= r.txEnable;           --rx_En is active low
     rdValid    <= r.respValid;
     rdData     <= r.responseData;
-    wrNotValid <= r.wrNotValid;
+    --wrNotValid <= r.wrNotValid;
 
   end process comb;
 

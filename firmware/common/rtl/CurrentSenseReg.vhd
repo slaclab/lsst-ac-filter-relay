@@ -14,7 +14,7 @@
 -- File       : CurrentSenseReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-03-14
--- Last update: 2018-04-26
+-- Last update: 2018-05-04
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ entity CurrentSenseReg is
     rxData          : in  slv(63 downto 0);
     -- TX Interface
     txValid         : out sl;
-    wrNotValid      : in  sl;
+    -------wrNotValid      : in  sl;
     txData          : out slv(47 downto 0);
     txReady         : in  sl);
 end CurrentSenseReg;
@@ -89,9 +89,7 @@ begin
     v := r;
 
     -- Reset the strobe
-    if(wrNotValid = '1') then
       v.txValid := '0';
-    end if;
 
     -- Check for valid
     if (rxValid = '1') then
@@ -123,7 +121,7 @@ begin
 
     -- Check for write transaction
     if (r.txValid = '1') then
-      -- Reset set the bus
+      -- Reset the bus
       v.rxData  := (others => '1');
       -- Reset the flag
       v.rxValid := '0';
