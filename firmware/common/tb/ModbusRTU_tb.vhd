@@ -114,7 +114,6 @@ architecture behavior of ModbusRTU_tb is
   signal responseValid : sl;
   signal transmitValid : sl;
   signal transmitReady : sl;
-  signal wrNotValid    : sl;
 
   
   
@@ -154,7 +153,7 @@ begin
 	axiLiteBusSimWrite(clk, axilWriteMasters, axilWriteSlaves, x"00000004", x"00010000", true);
 	
 	wait for 3500 us;
-    axiLiteBusSimWrite(clk, axilWriteMasters, axilWriteSlaves, x"00000000", x"01030001", true);
+    axiLiteBusSimWrite(clk, axilWriteMasters, axilWriteSlaves, x"00000000", x"11030001", true);
 	wait for 100 us;
 	axiLiteBusSimWrite(clk, axilWriteMasters, axilWriteSlaves, x"00000004", x"00010000", true);
 	wait;
@@ -165,6 +164,7 @@ begin
     rx  <= '1';
     --wait for 504201 ns;
 	wait for 2000000 ns;
+
 	--1
     rx  <= '0';
 	wait for 8712 ns;

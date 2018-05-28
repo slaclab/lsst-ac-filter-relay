@@ -36,6 +36,7 @@ entity CurrentSenseReg is
   generic (
     TPD_G : time := 1 ns);
   port (
+    mycounter : in slv(31 downto 0);
     -- Slave AXI-Lite Interface
     axilClk         : in  sl;
     axilRst         : in  sl;
@@ -80,7 +81,7 @@ architecture Behavioral of CurrentSenseReg is
 begin
 
   comb : process (axilReadMaster, axilRst, axilWriteMaster, r, rxData,
-                  rxValid, txReady) is
+                  rxValid, txReady, mycounter) is
     variable v         : RegType;
     variable axilEp    : AxiLiteEndpointType;
     variable axiStatus : AxiLiteStatusType;
@@ -113,6 +114,8 @@ begin
       axiSlaveRegisterR(axilEp, X"08", 0, r.rxData(63 downto 32));
       axiSlaveRegisterR(axilEp, X"0C", 0, r.rxData(31 downto 0));
       axiSlaveRegisterR(axilEp, X"10", 0, r.rxValid);
+	  
+	  axiSlaveRegisterR(axilEp, X"14", 0, mycounter);
 
       -- Close out the AXI-Lite transaction
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);
@@ -122,7 +125,7 @@ begin
     -- Check for write transaction
     if (r.txValid = '1') then
       -- Reset the bus
-      v.rxData  := (others => '1');
+      v.rxData  := X"0000000000000000"; --(others => '1');
       -- Reset the flag
       v.rxValid := '0';
     end if;

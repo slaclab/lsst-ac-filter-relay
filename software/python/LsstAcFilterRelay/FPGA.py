@@ -27,7 +27,7 @@ class Fpga(pr.Device):
                  **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
-        coreStride = 0x00000 
+        coreStride = 0x40000 
         appStride  = 0x1000 
         
         # Add Core device
@@ -42,7 +42,7 @@ class Fpga(pr.Device):
 		
         self.add(Modbus(
             name    = 'Modbus Registers',
-            offset  = (0x40000)+ (appStride * 0),
+            offset  = (2*coreStride)+ (appStride * 0),
             expand  = False,
         ))
 
@@ -140,5 +140,15 @@ class Modbus(pr.Device):
         self.add(pr.RemoteVariable(
             name    = 'ModbusRxLo',
             offset  = 0x0C,
+            mode    = 'RO',
+        ))
+        self.add(pr.RemoteVariable(
+            name    = 'rxValid',
+            offset  = 0x10,
+            mode    = 'RO',
+        ))
+        self.add(pr.RemoteVariable(
+            name    = 'mycounter',
+            offset  = 0x14,
             mode    = 'RO',
         ))
