@@ -1,10 +1,10 @@
 -------------------------------------------------------------------------------
--- File       : UartAxiLiteMaster.vhd
+-- File       : ModbusRTU.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-06-09
--- Last update: 2018-05-27
+-- Last update: 2018-05-31
 -------------------------------------------------------------------------------
--- Description: Ties together everything needed for a full duplex UART.
+-- Description: Modbus RTU module.
 -- This includes Baud Rate Generator, Transmitter, Receiver and FIFOs.
 -------------------------------------------------------------------------------
 -- This file is part of 'SLAC Firmware Standard Library'.
@@ -49,15 +49,16 @@ entity ModbusRTU is
       rst : in sl;
 
       mycounter : out slv(31 downto 0);
+      errorCode : out slv(7 downto 0);
       -- Transmit parallel interface
       wrData    : in  slv(47 downto 0);
       wrValid   : in  sl;
-      --wrNotValid : out sl;
       wrReady   : out sl;
+
       -- Receive parallel interface
-      rdData    : out slv(63 downto 0);
-      rdValid   : out sl;
-      rdReady   : in  sl;
+      rdData  : out slv(255 downto 0);
+      rdValid : out sl;
+      rdReady : in  sl;
 
       -- SN65HVD1780QDRQ1 interface (RS485 transceiver) --
       rx    : in  sl;
@@ -79,67 +80,55 @@ architecture rtl of ModbusRTU is
       TX_TRANSMIT_S,
       TX_DELAY_S,
       TX_WAIT_S,
-
       RX_REC_RESP_S,
-      RX_PROCESS_RESP_S,
-      ERROR_S
-      );
+      RX_PROCESS_RESP_S);
 
    type RegType is record
-      wrReady     : sl;
-      data        : slv(63 downto 0);
-      charTime    : slv(31 downto 0);
-      mbState     : StateType;
-      crcValid    : sl;
-      holdReg     : slv(47 downto 0);
-      crcReset    : sl;
-      uartTxValid : sl;                 -------------------
-      fifoTxValid : sl;
-      --wrNotValid  : sl;
-      count       : slv(3 downto 0);
-      fifoDin     : slv(7 downto 0);
-      errorFlag   : slv(7 downto 0);
-
-      mycounter : slv(31 downto 0);
-
-      responseData : slv(63 downto 0);
-
-      txEnable  : sl;
-      respValid : sl;
+      wrReady      : sl;
+      data         : slv(63 downto 0);
+      charTime     : slv(31 downto 0);
+      mbState      : StateType;
+      crcValid     : sl;
+      holdReg      : slv(47 downto 0);
+      crcReset     : sl;
+      fifoTxValid  : sl;
+      count        : slv(5 downto 0);
+      fifoDin      : slv(7 downto 0);
+      errorCode    : slv(7 downto 0);
+      recFlag      : sl;
+      mycounter    : slv(31 downto 0);
+      responseData : slv(255 downto 0);
+      txEnable     : sl;
+      respValid    : sl;
 
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      wrReady     => '0',
-      data        => (others => '0'),
-      charTime    => (others => '0'),
-      mbState     => TX_INIT_S,
-      crcValid    => '0',
-      holdReg     => (others => '0'),
-      crcReset    => '0',
-      uartTxValid => '0',               ----------
-      fifoTxValid => '0',
-      count       => x"0",
-      fifoDin     => x"00",
-      errorFlag   => x"00",             -- x"00" no error
-
-      mycounter => (others => '0'),
-
+      wrReady      => '0',
+      data         => (others => '0'),
+      charTime     => (others => '0'),
+      mbState      => TX_INIT_S,
+      crcValid     => '0',
+      holdReg      => (others => '0'),
+      crcReset     => '0',
+      fifoTxValid  => '0',
+      count        => (others => '0'),
+      fifoDin      => x"00",
+      errorCode    => x"00",            -- x"00" no error
+      recFlag      => '0',
+      mycounter    => (others => '0'),
       responseData => (others => '0'),
-
-      txEnable  => '0',
-      respValid => '0'
+      txEnable     => '0',
+      respValid    => '0'
       );
 
-   signal uartTxData  : slv(7 downto 0);
-   signal uartTxValid : sl;
-   signal uartTxReady : sl;
-   signal uartTxRdEn  : sl;
-   signal fifoTxData  : slv(7 downto 0);
-   signal fifoTxValid : sl;
-   signal fifoTxReady : sl;
-   signal fifoTxEmpty : sl;
-
+   signal uartTxData     : slv(7 downto 0);
+   signal uartTxValid    : sl;
+   signal uartTxReady    : sl;
+   signal uartTxRdEn     : sl;
+   signal fifoTxValid    : sl;
+   signal fifoTxReady    : sl;
+   signal fifoTxEmpty    : sl;
    signal uartRxData     : slv(7 downto 0);
    signal uartRxValid    : sl;
    signal uartRxValidInt : sl;
@@ -148,14 +137,11 @@ architecture rtl of ModbusRTU is
    signal fifoRxValid    : sl;
    signal fifoRxReady    : sl;
    signal fifoRxRdEn     : sl;
-
-   signal baud16x : sl;
-
-   signal r   : RegType := REG_INIT_C;
-   signal rin : RegType;
-
-   signal crcOut : slv(15 downto 0);
-   signal crcRem : slv(15 downto 0);
+   signal baud16x        : sl;
+   signal r              : RegType := REG_INIT_C;
+   signal rin            : RegType;
+   signal crcOut         : slv(15 downto 0);
+   signal crcRem         : slv(15 downto 0);
 
 begin
 
@@ -186,11 +172,13 @@ begin
          when TX_IDLE_S =>
             v.wrReady := '1';
             if (wrValid = '1' and r.wrReady = '1') then
-               v.wrReady   := '0';
-               --v.wrNotValid := '1';
-               v.crcReset  := '1';  --reset crc before sending in the next data
-               v.mbState   := TX_CALC_CRC_S;
-               v.mycounter := r.mycounter + 1;
+               v.wrReady      := '0';
+               v.recFlag      := '0';
+               v.errorCode    := x"00";
+               v.crcReset     := '1';  --reset crc before sending in the next data
+               v.responseData := (others => '0');  --reset response data
+               v.mbState      := TX_CALC_CRC_S;
+               v.mycounter    := r.mycounter + 1;
             end if;
 
          when TX_CALC_CRC_S =>
@@ -199,8 +187,6 @@ begin
             v.mbState  := TX_INTERMEDIATE_S;
 
          when TX_INTERMEDIATE_S =>
-            --probably wait until crc finish before loading into v.data
-            -- if (baud16x = '1') then
             v.charTime := r.charTime + 1;
             if (r.charTime = TIMEOUT_G) then  --arbitrary wait 
                v.charTime := TIMEOUT_RESET_G;
@@ -208,36 +194,24 @@ begin
                v.mbState  := TX_TRANSMIT_S;
                v.txEnable := '1';
             end if;
-            -- end if;
-
 
          when TX_TRANSMIT_S =>
             if (fifoTxReady = '1') then
                v.count       := r.count + 1;
                v.fifoTxValid := '1';
                case r.count is
-                  when x"0" =>
-                     v.fifoDin := r.data(63 downto 56);  --MBID address of control unit
-                  when x"1" =>
-                     v.fifoDin := r.data(55 downto 48);  --Function code
-                  when x"2" =>
-                     v.fifoDin := r.data(47 downto 40);  --Starting address (hi)
-                  when x"3" =>
-                     v.fifoDin := r.data(39 downto 32);  --Starting address (lo)
-                  when x"4" =>
-                     v.fifoDin := r.data(31 downto 24);  --Quantity of registers (hi)
-                  when x"5" =>
-                     v.fifoDin := r.data(23 downto 16);  --Quantity of registers (low)
-                  when x"6" =>
-                     v.fifoDin := r.data(15 downto 8);   -- CRC lo
+                  when x"0" => v.fifoDin := r.data(63 downto 56);  --MBID address of control unit
+                  when x"1" => v.fifoDin := r.data(55 downto 48);  --Function code
+                  when x"2" => v.fifoDin := r.data(47 downto 40);  --Starting address (hi)
+                  when x"3" => v.fifoDin := r.data(39 downto 32);  --Starting address (lo)
+                  when x"4" => v.fifoDin := r.data(31 downto 24);  --Quantity of registers (hi)
+                  when x"5" => v.fifoDin := r.data(23 downto 16);  --Quantity of registers (low)
+                  when x"6" => v.fifoDin := r.data(15 downto 8);   -- CRC lo
                   when x"7" =>
-                     v.fifoDin := r.data(7 downto 0);    -- CRC hi
-                     v.count   := x"0";
+                     v.fifoDin := r.data(7 downto 0);              -- CRC hi
+                     v.count   := (others => '0');
                      v.mbState := TX_DELAY_S;
-                  when others =>
-                     v.mbState   := ERROR_S;
-                     v.errorFlag := x"aa";
-                     v.count     := x"0";
+                  when others => null;
                end case;
             end if;
             
@@ -254,50 +228,71 @@ begin
             v.txEnable := '0';
             if (fifoRxValid = '1') then
                v.charTime := TIMEOUT_RESET_G;         --reset timeout timer
+               v.recFlag  := '1';
                v.count    := r.count + 1;
+               --message frame: MBID 1 byte | Function Code 1 byte | byte count 1 byte | reg value 2n byte | CRClo 1 byte | CRChi 1byte
                case r.count is
-                  when x"0" =>
-                     v.responseData(63 downto 56) := fifoRxData;  --MBID address
-                  when x"1" =>
-                     v.responseData(55 downto 48) := fifoRxData;  --Function code
-                  when x"2" =>
-                     v.responseData(47 downto 40) := fifoRxData;  --Quantity of bytes in the data field (will be fixed at 2 bytes for now)
-                  when x"3" =>
-                     v.responseData(39 downto 32) := fifoRxData;  --Register value (hi)
-                  when x"4" =>
-                     v.responseData(31 downto 24) := fifoRxData;  --Register value (lo)
-                  when x"5" =>
-                     v.responseData(23 downto 16) := fifoRxData;  --CRC (lo)
-                  when x"6" =>
-                     v.responseData(15 downto 8) := fifoRxData;   --CRC (hi)
-                     --when x"7" =>
-                     v.responseData(7 downto 0)  := x"00";  --nothing for now
-                     v.count                     := x"0";
-                     v.mbState                   := RX_PROCESS_RESP_S;
+                  when x"0"   => v.responseData(255 downto 248) := fifoRxData;
+                  when x"1"   => v.responseData(247 downto 240) := fifoRxData;
+                  when x"2"   => v.responseData(239 downto 232) := fifoRxData;
+                  when x"3"   => v.responseData(231 downto 224) := fifoRxData;
+                  when x"4"   => v.responseData(223 downto 216) := fifoRxData;
+                  when x"5"   => v.responseData(215 downto 208) := fifoRxData;
+                  when x"6"   => v.responseData(207 downto 200) := fifoRxData;
+                  when x"7"   => v.responseData(199 downto 192) := fifoRxData;
+                  when x"8"   => v.responseData(191 downto 184) := fifoRxData;
+                  when x"9"   => v.responseData(183 downto 176) := fifoRxData;
+                  when x"10"  => v.responseData(175 downto 168) := fifoRxData;
+                  when x"11"  => v.responseData(167 downto 160) := fifoRxData;
+                  when x"12"  => v.responseData(159 downto 152) := fifoRxData;
+                  when x"13"  => v.responseData(151 downto 144) := fifoRxData;
+                  when x"14"  => v.responseData(143 downto 136) := fifoRxData;
+                  when x"15"  => v.responseData(135 downto 128) := fifoRxData;
+                  when x"16"  => v.responseData(127 downto 120) := fifoRxData;
+                  when x"17"  => v.responseData(119 downto 112) := fifoRxData;
+                  when x"18"  => v.responseData(111 downto 104) := fifoRxData;
+                  when x"19"  => v.responseData(103 downto 96)  := fifoRxData;
+                  when x"20"  => v.responseData(95 downto 88)   := fifoRxData;
+                  when x"21"  => v.responseData(87 downto 80)   := fifoRxData;
+                  when x"22"  => v.responseData(79 downto 72)   := fifoRxData;
+                  when x"23"  => v.responseData(71 downto 64)   := fifoRxData;
+                  when x"24"  => v.responseData(63 downto 56)   := fifoRxData;
+                  when x"25"  => v.responseData(55 downto 48)   := fifoRxData;
+                  when x"26"  => v.responseData(47 downto 40)   := fifoRxData;
+                  when x"27"  => v.responseData(39 downto 32)   := fifoRxData;
+                  when x"28"  => v.responseData(31 downto 24)   := fifoRxData;
+                  when x"29"  => v.responseData(23 downto 16)   := fifoRxData;
+                  when x"30"  => v.responseData(15 downto 8)    := fifoRxData;
+                                 --when x"31"  => v.responseData(7 downto 0)     := fifoRxData;
                   when others =>
-                     v.mbState   := ERROR_S;
-                     v.errorFlag := x"cc";
-                     v.count     := x"0";
+                     v.mbState   := RX_PROCESS_RESP_S;
+                     v.errorCode := x"bb";
+                     v.count     := (others => '0');
                end case;
             end if;
-            if (baud16x = '1') then
+            --silence of 3.5 character time indicate end of transmission
+            if (baud16x = '1' and r.recFlag = '1') then
+               v.charTime := r.charTime + 1;
+               if (r.charTime = TIMEOUT_G) then
+                  v.count    := (others => '0');
+                  v.mbState  := RX_PROCESS_RESP_S;
+                  v.charTime := TIMEOUT_RESET_G;
+               end if;
+            end if;
+            --generate time-out error if no response received
+            if (baud16x = '1' and r.recFlag = '0') then
                v.charTime := r.charTime + 1;
                if (r.charTime = RESP_TIMEOUT_G) then  --response timed out
-                  v.mbState   := ERROR_S;
+                  v.count     := (others => '0');
+                  v.mbState   := RX_PROCESS_RESP_S;
                   v.charTime  := TIMEOUT_RESET_G;
-                  v.errorFlag := x"bb";  --set flag here for response timed-out error
+                  v.errorCode := x"aa";  --set flag here for response timed-out error
                end if;
             end if;
 
          when RX_PROCESS_RESP_S =>
             v.respValid := '1';
             v.mbState   := TX_INIT_S;
-
-
-         when ERROR_S =>                --This needs more work.
-            v.responseData(7 downto 0) := r.errorFlag;
-            v.mbState                  := TX_INIT_S;
-            v.respValid                := '1';
 
       end case;
 
@@ -311,6 +306,7 @@ begin
       rdValid   <= r.respValid;
       rdData    <= r.responseData;
       mycounter <= r.mycounter;
+      errorCode <= r.errorCode;
 
    end process comb;
 
@@ -376,7 +372,6 @@ begin
    -- FIFO to feed UART transmitter
    -------------------------------------------------------------------------------------------------
    wrReady     <= fifoTxReady;
-   --fifoTxData  <= wrData;
    fifoTxValid <= r.fifoTxValid and fifoTxReady;
    uartTxRdEn  <= uartTxReady and uartTxValid;
    U_Fifo_Tx : entity work.Fifo

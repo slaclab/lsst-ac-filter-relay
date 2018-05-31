@@ -2,7 +2,7 @@
 -- File       : LSStACFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-02-28
--- Last update: 2018-05-26
+-- Last update: 2018-05-28
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -64,11 +64,11 @@ architecture top_level of LsstAcFilterRelay is
    signal axilReadSlaves   : AxiLiteReadSlaveArray(6 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
 
    signal mbDataTx      : slv(47 downto 0);
-   signal responseData  : slv(63 downto 0);
+   signal responseData  : slv(255 downto 0);
    signal responseValid : sl;
    signal transmitValid : sl;
    signal transmitReady : sl;
-   --signal wrNotValid    : sl;
+   signal errorCode     : slv(7 downto 0);
    signal mycounter     : slv(31 downto 0);
 
 begin
@@ -138,9 +138,10 @@ begin
          rxData          => responseData,         --[in]
          -- TX Interface
          txValid         => transmitValid,        --[out]
-         ------wrNotValid      => wrNotValid,           --[out]
          txData          => mbDataTx,             --[out]
-         txReady         => transmitReady);       --[in]
+         txReady         => transmitReady,        --[in]
+         -- error message
+         errorCode       => errorCode);           --[in]
 
    -----------------------------------------------------------
    -- NON-AXI entity
@@ -162,12 +163,12 @@ begin
          -- Mobus Data --    
          wrData  => mbDataTx,           --[in]
          wrValid => transmitValid,      --[in]
-         -----wrNotValid => wrNotValid,
          wrReady => transmitReady,      --[out]
 
          rdReady => '1',  --[in]    --- still need to work on this
 
-         rdData  => responseData,       --[out]
-         rdValid => responseValid);     --[out]
+         errorCode => errorCode,        --[out]
+         rdData    => responseData,     --[out]
+         rdValid   => responseValid);   --[out]
 
 end top_level;

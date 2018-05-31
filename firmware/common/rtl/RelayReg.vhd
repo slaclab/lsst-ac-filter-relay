@@ -14,7 +14,7 @@
 -- File       : RelayReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-02-04
--- Last update: 2018-02-28
+-- Last update: 2018-05-31
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -33,66 +33,66 @@ use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 
 entity RelayReg is
-generic (
-	  TPD_G            : time            := 1 ns);
-	  
-Port ( 
+   generic (
+      TPD_G : time := 1 ns);
+
+   port (
 
 -- Slave AXI-Lite Interface
-    axilClk         : in  sl;
-    axilRst         : in  sl;
-    axilReadMaster  : in  AxiLiteReadMasterType;
-    axilReadSlave   : out AxiLiteReadSlaveType;
-    axilWriteMaster : in  AxiLiteWriteMasterType;
-    axilWriteSlave  : out AxiLiteWriteSlaveType;
+      axilClk         : in  sl;
+      axilRst         : in  sl;
+      axilReadMaster  : in  AxiLiteReadMasterType;
+      axilReadSlave   : out AxiLiteReadSlaveType;
+      axilWriteMaster : in  AxiLiteWriteMasterType;
+      axilWriteSlave  : out AxiLiteWriteSlaveType;
 
--- Relay Control	
-    relOK      : out   slv(11 downto 0) 
+-- Relay Control  
+      relOK : out slv(11 downto 0)
 
-    );
+      );
 end RelayReg;
 
 architecture Behavioral of RelayReg is
 
-    type RegType is record
-      relayOK             :  slv(11 downto 0);
-      axilReadSlave     :  AxiLiteReadSlaveType;
-      axilWriteSlave    :  AxiLiteWriteSlaveType;
-    end record;   
-      
-    constant REG_INIT_C : RegType := (
+   type RegType is record
+      relayOK        : slv(11 downto 0);
+      axilReadSlave  : AxiLiteReadSlaveType;
+      axilWriteSlave : AxiLiteWriteSlaveType;
+   end record;
+   
+   constant REG_INIT_C : RegType := (
       relayOK        => x"000",
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C
       ); 
-      
-      --Output of register
-      signal r   : RegType := REG_INIT_C;
-      --input of register
-      signal rin : RegType;
-      
-begin    
 
- 
- --start of sequential block----------------------------
-    seq : process (axilClk) is
-    begin
+   --Output of register
+   signal r   : RegType := REG_INIT_C;
+   --input of register
+   signal rin : RegType;
+   
+begin
+
+
+   --start of sequential block----------------------------
+   seq : process (axilClk) is
+   begin
       if (rising_edge(axilClk)) then
-          r <= rin after TPD_G;
+         r <= rin after TPD_G;
       end if;
-    end process seq;
+   end process seq;
 --end of sequential block--------------------------------
-   
-   
+
+
 --start of combinational block---------------------------   
-    comb : process (r, axilRst, axilReadMaster, axilWriteMaster) is
-      variable v : RegType;
+   comb : process (r, axilRst, axilReadMaster, axilWriteMaster) is
+      variable v      : RegType;
       variable axilEp : AxiLiteEndpointType;
-    begin
-      v := r; --initialize v
-      
+   begin
+      v := r;                           --initialize v
+
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
-      
+
       --axiSlaveRegister(axilEp, X"00", 0, v.relayOK);  -- Register 0 -- 12 on/off bit in 11-0  
       axiSlaveRegister(axilEp, X"00", 0, v.relayOK(0));
       axiSlaveRegister(axilEp, X"04", 0, v.relayOK(1));
@@ -106,19 +106,19 @@ begin
       axiSlaveRegister(axilEp, X"24", 0, v.relayOK(9));
       axiSlaveRegister(axilEp, X"28", 0, v.relayOK(10));
       axiSlaveRegister(axilEp, X"2C", 0, v.relayOK(11));
-      
-      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);   
-      
-      if (axilRst = '1') then 
-        v := REG_INIT_C;
+
+      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave);
+
+      if (axilRst = '1') then
+         v := REG_INIT_C;
       end if;
-      
+
       rin <= v;
+
+      relOK          <= r.relayOK;
+      axilWriteSlave <= r.axilWriteSlave;
+      axilReadSlave  <= r.axilReadSlave;
       
-    relOK  <= r.relayOK;      
-    axilWriteSlave  <= r.axilWriteSlave;      
-    axilReadSlave  <= r.axilReadSlave;      
-    
-    end process comb;
+   end process comb;
 --end of combinational block-----------------------------    
 end architecture Behavioral;
