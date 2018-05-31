@@ -133,42 +133,42 @@ class Modbus(pr.Device):
             mode    = 'RW',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'echo0',
+            name    = 'MbData0',
             offset  = 0x08,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'echo1',
+            name    = 'MbData1',
             offset  = 0x0C,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'Byte',
+            name    = 'MbData2',
             offset  = 0x10,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'MbData0',
+            name    = 'MbData3',
             offset  = 0x14,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'MbData1',
+            name    = 'MbData4',
             offset  = 0x18,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'MbData2',
+            name    = 'MbData5',
             offset  = 0x1C,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'MbData3',
+            name    = 'MbData6',
             offset  = 0x20,
             mode    = 'RO',
         ))
         self.add(pr.RemoteVariable(
-            name    = 'MbData4',
+            name    = 'MbData7',
             offset  = 0x24,
             mode    = 'RO',
         ))
