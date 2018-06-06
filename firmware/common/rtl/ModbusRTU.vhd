@@ -401,7 +401,6 @@ begin
    U_UartRx_1 : entity work.UartRx
       generic map (
          TPD_G        => 1 ns,
-         STOP_BITS_G  => STOP_BITS_G,
          PARITY_G     => PARITY_G,
          DATA_WIDTH_G => DATA_WIDTH_G)
       port map (
