@@ -2,7 +2,7 @@
 -- File       : ModbusRTU.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-06-09
--- Last update: 2018-05-31
+-- Last update: 2018-06-16
 -------------------------------------------------------------------------------
 -- Description: Modbus RTU module.
 -- This includes Baud Rate Generator, Transmitter, Receiver and FIFOs.
@@ -36,7 +36,7 @@ entity ModbusRTU is
 
       --UART generics
       STOP_BITS_G  : integer range 1 to 2 := 2;
-      PARITY_G     : string               := "NONE";
+      PARITY_G     : string               := "NONE"; --"NONE "EVEN" "ODD"
       DATA_WIDTH_G : integer range 5 to 8 := 8;
 
       TPD_G             : time                  := 1 ns;
@@ -92,7 +92,7 @@ architecture rtl of ModbusRTU is
       holdReg      : slv(47 downto 0);
       crcReset     : sl;
       fifoTxValid  : sl;
-      count        : slv(5 downto 0);
+      count        : slv(4 downto 0);
       fifoDin      : slv(7 downto 0);
       errorCode    : slv(7 downto 0);
       recFlag      : sl;
@@ -200,15 +200,15 @@ begin
                v.count       := r.count + 1;
                v.fifoTxValid := '1';
                case r.count is
-                  when x"0" => v.fifoDin := r.data(63 downto 56);  --MBID address of control unit
-                  when x"1" => v.fifoDin := r.data(55 downto 48);  --Function code
-                  when x"2" => v.fifoDin := r.data(47 downto 40);  --Starting address (hi)
-                  when x"3" => v.fifoDin := r.data(39 downto 32);  --Starting address (lo)
-                  when x"4" => v.fifoDin := r.data(31 downto 24);  --Quantity of registers (hi)
-                  when x"5" => v.fifoDin := r.data(23 downto 16);  --Quantity of registers (low)
-                  when x"6" => v.fifoDin := r.data(15 downto 8);   -- CRC lo
-                  when x"7" =>
-                     v.fifoDin := r.data(7 downto 0);              -- CRC hi
+                  when "00000" => v.fifoDin := r.data(63 downto 56);  --MBID address of control unit
+                  when "00001" => v.fifoDin := r.data(55 downto 48);  --Function code
+                  when "00010" => v.fifoDin := r.data(47 downto 40);  --Starting address (hi)
+                  when "00011" => v.fifoDin := r.data(39 downto 32);  --Starting address (lo)
+                  when "00100" => v.fifoDin := r.data(31 downto 24);  --Quantity of registers (hi)
+                  when "00101" => v.fifoDin := r.data(23 downto 16);  --Quantity of registers (low)
+                  when "00110" => v.fifoDin := r.data(15 downto 8);   -- CRC lo
+                  when "00111" =>
+                     v.fifoDin := r.data(7 downto 0);                 -- CRC hi
                      v.count   := (others => '0');
                      v.mbState := TX_DELAY_S;
                   when others => null;
@@ -232,39 +232,39 @@ begin
                v.count    := r.count + 1;
                --message frame: MBID 1 byte | Function Code 1 byte | byte count 1 byte | reg value 2n byte | CRClo 1 byte | CRChi 1byte
                case r.count is
-                  when x"0"   => v.responseData(255 downto 248) := fifoRxData;
-                  when x"1"   => v.responseData(247 downto 240) := fifoRxData;
-                  when x"2"   => v.responseData(239 downto 232) := fifoRxData;
-                  when x"3"   => v.responseData(231 downto 224) := fifoRxData;
-                  when x"4"   => v.responseData(223 downto 216) := fifoRxData;
-                  when x"5"   => v.responseData(215 downto 208) := fifoRxData;
-                  when x"6"   => v.responseData(207 downto 200) := fifoRxData;
-                  when x"7"   => v.responseData(199 downto 192) := fifoRxData;
-                  when x"8"   => v.responseData(191 downto 184) := fifoRxData;
-                  when x"9"   => v.responseData(183 downto 176) := fifoRxData;
-                  when x"10"  => v.responseData(175 downto 168) := fifoRxData;
-                  when x"11"  => v.responseData(167 downto 160) := fifoRxData;
-                  when x"12"  => v.responseData(159 downto 152) := fifoRxData;
-                  when x"13"  => v.responseData(151 downto 144) := fifoRxData;
-                  when x"14"  => v.responseData(143 downto 136) := fifoRxData;
-                  when x"15"  => v.responseData(135 downto 128) := fifoRxData;
-                  when x"16"  => v.responseData(127 downto 120) := fifoRxData;
-                  when x"17"  => v.responseData(119 downto 112) := fifoRxData;
-                  when x"18"  => v.responseData(111 downto 104) := fifoRxData;
-                  when x"19"  => v.responseData(103 downto 96)  := fifoRxData;
-                  when x"20"  => v.responseData(95 downto 88)   := fifoRxData;
-                  when x"21"  => v.responseData(87 downto 80)   := fifoRxData;
-                  when x"22"  => v.responseData(79 downto 72)   := fifoRxData;
-                  when x"23"  => v.responseData(71 downto 64)   := fifoRxData;
-                  when x"24"  => v.responseData(63 downto 56)   := fifoRxData;
-                  when x"25"  => v.responseData(55 downto 48)   := fifoRxData;
-                  when x"26"  => v.responseData(47 downto 40)   := fifoRxData;
-                  when x"27"  => v.responseData(39 downto 32)   := fifoRxData;
-                  when x"28"  => v.responseData(31 downto 24)   := fifoRxData;
-                  when x"29"  => v.responseData(23 downto 16)   := fifoRxData;
-                  when x"30"  => v.responseData(15 downto 8)    := fifoRxData;
-                                 --when x"31"  => v.responseData(7 downto 0)     := fifoRxData;
-                  when others =>
+                  when "00000" => v.responseData(255 downto 248) := fifoRxData;
+                  when "00001" => v.responseData(247 downto 240) := fifoRxData;
+                  when "00010" => v.responseData(239 downto 232) := fifoRxData;
+                  when "00011" => v.responseData(231 downto 224) := fifoRxData;
+                  when "00100" => v.responseData(223 downto 216) := fifoRxData;
+                  when "00101" => v.responseData(215 downto 208) := fifoRxData;
+                  when "00110" => v.responseData(207 downto 200) := fifoRxData;
+                  when "00111" => v.responseData(199 downto 192) := fifoRxData;
+                  when "01000" => v.responseData(191 downto 184) := fifoRxData;
+                  when "01001" => v.responseData(183 downto 176) := fifoRxData;
+                  when "01010" => v.responseData(175 downto 168) := fifoRxData;
+                  when "01011" => v.responseData(167 downto 160) := fifoRxData;
+                  when "01100" => v.responseData(159 downto 152) := fifoRxData;
+                  when "01101" => v.responseData(151 downto 144) := fifoRxData;
+                  when "01110" => v.responseData(143 downto 136) := fifoRxData;
+                  when "01111" => v.responseData(135 downto 128) := fifoRxData;
+                  when "10000" => v.responseData(127 downto 120) := fifoRxData;
+                  when "10001" => v.responseData(119 downto 112) := fifoRxData;
+                  when "10010" => v.responseData(111 downto 104) := fifoRxData;
+                  when "10011" => v.responseData(103 downto 96)  := fifoRxData;
+                  when "10100" => v.responseData(95 downto 88)   := fifoRxData;
+                  when "10101" => v.responseData(87 downto 80)   := fifoRxData;
+                  when "10110" => v.responseData(79 downto 72)   := fifoRxData;
+                  when "10111" => v.responseData(71 downto 64)   := fifoRxData;
+                  when "11000" => v.responseData(63 downto 56)   := fifoRxData;
+                  when "11001" => v.responseData(55 downto 48)   := fifoRxData;
+                  when "11010" => v.responseData(47 downto 40)   := fifoRxData;
+                  when "11011" => v.responseData(39 downto 32)   := fifoRxData;
+                  when "11100" => v.responseData(31 downto 24)   := fifoRxData;
+                  when "11101" => v.responseData(23 downto 16)   := fifoRxData;
+                  when "11110" => v.responseData(15 downto 8)    := fifoRxData;
+                                  --when x"31"  => v.responseData(7 downto 0)     := fifoRxData;
+                  when others  =>
                      v.mbState   := RX_PROCESS_RESP_S;
                      v.errorCode := x"bb";
                      v.count     := (others => '0');
