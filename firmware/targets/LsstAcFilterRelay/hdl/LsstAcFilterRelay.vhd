@@ -2,7 +2,7 @@
 -- File       : LSStACFilterRelay.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2018-02-28
--- Last update: 2018-05-28
+-- Last update: 2018-06-22
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -43,6 +43,12 @@ entity LsstAcFilterRelay is
       ethRxN     : in  sl;
       ethTxP     : out sl;
       ethTxN     : out sl;
+      -- Boot Memory Ports
+      bootCsL    : out sl;
+      bootMosi   : out sl;
+      bootMiso   : in  sl;
+      bootWpL    : out sl;
+      bootHdL    : out sl;
       -- XADC Ports
       vPIn       : in  sl;
       vNIn       : in  sl;
@@ -93,6 +99,12 @@ begin
          -- XADC Ports
          vPIn             => vPIn,              --[in]
          vNIn             => vNIn,              --[in]
+         -- Boot Memory Ports
+         bootCsL          => bootCsL,
+         bootMosi         => bootMosi,
+         bootMiso         => bootMiso,
+         bootWpL          => bootWpL,
+         bootHdL          => bootHdL,
          -- 1GbE Interface
          ethClkP          => ethClkP,           --[in]
          ethClkN          => ethClkN,           --[in]

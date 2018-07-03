@@ -30,6 +30,12 @@ set_property -dict {PACKAGE_PIN Y16 IOSTANDARD LVCMOS33} [get_ports recData]
 set_property -dict {PACKAGE_PIN AA16 IOSTANDARD LVCMOS33} [get_ports recEn]
 set_property -dict {PACKAGE_PIN AB16 IOSTANDARD LVCMOS33} [get_ports driverEn]
 
+set_property -dict { PACKAGE_PIN P22 IOSTANDARD LVCMOS33 } [get_ports { bootMosi}]
+set_property -dict { PACKAGE_PIN R22 IOSTANDARD LVCMOS33 } [get_ports { bootMiso}]
+set_property -dict { PACKAGE_PIN P21 IOSTANDARD LVCMOS33 } [get_ports { bootWpL}]
+set_property -dict { PACKAGE_PIN R21 IOSTANDARD LVCMOS33 } [get_ports { bootHdL}]
+set_property -dict { PACKAGE_PIN T19 IOSTANDARD LVCMOS33 } [get_ports { bootCsL}]
+
 set_property -dict {PACKAGE_PIN F6} [get_ports ethClkP]
 set_property -dict {PACKAGE_PIN E6} [get_ports ethClkN]
 set_property -dict {PACKAGE_PIN B4} [get_ports ethTxP]
