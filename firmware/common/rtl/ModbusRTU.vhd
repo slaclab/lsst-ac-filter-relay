@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : ModbusRTU.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2016-06-09
--- Last update: 2018-06-16
 -------------------------------------------------------------------------------
 -- Description: Modbus RTU module.
 -- This includes Baud Rate Generator, Transmitter, Receiver and FIFOs.
@@ -21,7 +19,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
+library surf;
+use surf.StdRtlPkg.all;
 
 entity ModbusRTU is
 
@@ -340,7 +339,7 @@ begin
    -- Create a clock enable that is 16x the baud rate.
    -- UartTx and UartRx use this.
    -------------------------------------------------------------------------------------------------
-   U_UartBrg_1 : entity work.UartBrg
+   U_UartBrg_1 : entity surf.UartBrg
       generic map (
          CLK_FREQ_G   => CLK_FREQ_G,
          BAUD_RATE_G  => BAUD_RATE_G,
@@ -348,12 +347,12 @@ begin
       port map (
          clk   => clk,                  -- [in]
          rst   => rst,                  -- [in]
-         clkEn => baud16x);             -- [out]
+         baudClkEn => baud16x);             -- [out]
 
    -------------------------------------------------------------------------------------------------
    -- UART transmitter
    -------------------------------------------------------------------------------------------------
-   U_UartTx_1 : entity work.UartTx
+   U_UartTx_1 : entity surf.UartTx
       generic map (
          TPD_G        => 1 ns,
          STOP_BITS_G  => STOP_BITS_G,
@@ -362,7 +361,7 @@ begin
       port map (
          clk     => clk,                -- [in]
          rst     => rst,                -- [in]
-         baud16x => baud16x,            -- [in]
+         baudClkEn => baud16x,            -- [in]
          wrData  => uartTxData,         -- [in]
          wrValid => uartTxValid,        -- [in]
          wrReady => uartTxReady,        -- [out]
@@ -374,11 +373,11 @@ begin
    wrReady     <= fifoTxReady;
    fifoTxValid <= r.fifoTxValid and fifoTxReady;
    uartTxRdEn  <= uartTxReady and uartTxValid;
-   U_Fifo_Tx : entity work.Fifo
+   U_Fifo_Tx : entity surf.Fifo
       generic map (
          TPD_G           => TPD_G,
          GEN_SYNC_FIFO_G => true,
-         BRAM_EN_G       => FIFO_BRAM_EN_G,
+         MEMORY_TYPE_G   => ite(FIFO_BRAM_EN_G,"block","distributed"),
          FWFT_EN_G       => true,
          PIPE_STAGES_G   => 0,
          DATA_WIDTH_G    => DATA_WIDTH_G,
@@ -398,7 +397,7 @@ begin
    -------------------------------------------------------------------------------------------------
    -- UART Receiver
    -------------------------------------------------------------------------------------------------
-   U_UartRx_1 : entity work.UartRx
+   U_UartRx_1 : entity surf.UartRx
       generic map (
          TPD_G        => 1 ns,
          PARITY_G     => PARITY_G,
@@ -406,7 +405,7 @@ begin
       port map (
          clk     => clk,                -- [in]
          rst     => rst,                -- [in]
-         baud16x => baud16x,            -- [in]
+         baudClkEn => baud16x,            -- [in]
          rdData  => uartRxData,         -- [out]
          rdValid => uartRxValid,        -- [out]
          rdReady => uartRxReady,        -- [in]
@@ -420,11 +419,11 @@ begin
 
    fifoRxReady <= rdReady;
 
-   U_Fifo_Rx : entity work.Fifo
+   U_Fifo_Rx : entity surf.Fifo
       generic map (
          TPD_G           => TPD_G,
          GEN_SYNC_FIFO_G => true,
-         BRAM_EN_G       => FIFO_BRAM_EN_G,
+         MEMORY_TYPE_G   => ite(FIFO_BRAM_EN_G,"block","distributed"),
          FWFT_EN_G       => true,
          PIPE_STAGES_G   => 0,
          DATA_WIDTH_G    => DATA_WIDTH_G,

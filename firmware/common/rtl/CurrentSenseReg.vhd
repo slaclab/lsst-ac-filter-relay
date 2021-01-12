@@ -13,8 +13,6 @@
 -------------------------------------------------------------------------------
 -- File       : CurrentSenseReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2018-03-14
--- Last update: 2018-05-28
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -29,8 +27,10 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
 
 entity CurrentSenseReg is
    generic (
