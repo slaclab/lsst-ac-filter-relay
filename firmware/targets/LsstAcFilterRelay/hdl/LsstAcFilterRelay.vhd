@@ -18,8 +18,11 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+
+library lsst_pwr_ctrl_core;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -82,7 +85,7 @@ begin
    ---------------------
    -- Common Core Module
    ---------------------
-   U_Core : entity work.LsstPwrCtrlCore
+   U_Core : entity lsst_pwr_ctrl_core.LsstPwrCtrlCore
       generic map (
          TPD_G        => TPD_G,
          BUILD_INFO_G => BUILD_INFO_G)
