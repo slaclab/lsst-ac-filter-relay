@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : Crc16Parallel.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2013-05-01
--- Last update: 2018-03-01
 -------------------------------------------------------------------------------
 -- Description:
 -- 16 bit CRC with 48-bit wide input
@@ -21,7 +19,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
+library surf;
+use surf.StdRtlPkg.all;
+
 use work.Crc16D48Pkg.all;
 
 entity Crc16Parallel is 

@@ -13,8 +13,6 @@
 -------------------------------------------------------------------------------
 -- File       : RelayReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2018-02-04
--- Last update: 2018-05-31
 -------------------------------------------------------------------------------
 -- Description: Firmware Target's Top Level
 -------------------------------------------------------------------------------
@@ -29,8 +27,10 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
 
 entity RelayReg is
    generic (
