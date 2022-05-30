@@ -142,10 +142,31 @@ architecture rtl of ModbusRTU is
    signal crcOut         : slv(15 downto 0);
    signal crcRem         : slv(15 downto 0);
 
+   -- attribute dont_touch                   : string;
+   -- attribute dont_touch of r              : signal is "TRUE";
+   -- attribute dont_touch of uartTxData     : signal is "TRUE";
+   -- attribute dont_touch of uartTxValid    : signal is "TRUE";
+   -- attribute dont_touch of uartTxReady    : signal is "TRUE";
+   -- attribute dont_touch of uartTxRdEn     : signal is "TRUE";
+   -- attribute dont_touch of fifoTxValid    : signal is "TRUE";
+   -- attribute dont_touch of fifoTxReady    : signal is "TRUE";
+   -- attribute dont_touch of fifoTxEmpty    : signal is "TRUE";
+   -- attribute dont_touch of uartRxData     : signal is "TRUE";
+   -- attribute dont_touch of uartRxValid    : signal is "TRUE";
+   -- attribute dont_touch of uartRxValidInt : signal is "TRUE";
+   -- attribute dont_touch of uartRxReady    : signal is "TRUE";
+   -- attribute dont_touch of fifoRxData     : signal is "TRUE";
+   -- attribute dont_touch of fifoRxValid    : signal is "TRUE";
+   -- attribute dont_touch of fifoRxReady    : signal is "TRUE";
+   -- attribute dont_touch of fifoRxRdEn     : signal is "TRUE";
+   -- attribute dont_touch of baud16x        : signal is "TRUE";
+   -- attribute dont_touch of crcOut         : signal is "TRUE";
+   -- attribute dont_touch of crcRem         : signal is "TRUE";
+
 begin
 
 
-   comb : process (baud16x, crcout, fifoRxData, fifoRxValid, fifoTxEmpty,
+   comb : process (baud16x, crcout, fifoRxData, fifoRxValid, fifoTxEmpty, uartTxValid,
                    fifoTxReady, r, rst, uartTxReady, wrData, wrValid) is
       variable v : RegType;
    begin
@@ -219,7 +240,7 @@ begin
 
             --wait for UART to finish transmission
          when TX_WAIT_S =>
-            if (fifoTxEmpty = '1' and uartTxReady = '1') then
+            if (fifoTxEmpty = '1') and (uartTxReady = '1') and (uartTxValid = '0') then
                v.mbState := RX_REC_RESP_S;
             end if;
 

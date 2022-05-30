@@ -124,7 +124,7 @@ architecture behavior of ModbusRTU_tb is
   signal rst : sl := '1';
 
   signal mbDataTx      : slv(47 downto 0);
-  signal responseData  : slv(63 downto 0);
+  signal responseData  : slv(255 downto 0);
   signal responseValid : sl;
   signal transmitValid : sl;
   signal transmitReady : sl;
@@ -351,6 +351,8 @@ begin
     generic map(
       TPD_G => 1 ns)
     port map (
+      mycounter       => (others=>'0'),
+      errorCode       => (others=>'0'),
       -- Slave AXI-Lite Interface
       axilClk         => clk,              --[in]
       axilRst         => rst,              --[in]
